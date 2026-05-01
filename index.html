@@ -3,8 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="description" content="Professional Radio Streaming App - Listen to live radio stations online" />
-  <meta name="theme-color" content="#020617" />
   <title>🎧 Radio Streaming App | Live Radio</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -285,11 +283,6 @@
 
     .topbar {
       margin-bottom: 30px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 15px;
     }
 
     .topbar h2 {
@@ -312,7 +305,6 @@
       border-radius: 24px;
       transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       animation: fadeIn 0.5s ease;
-      cursor: pointer;
     }
 
     .radio-card:hover {
@@ -326,11 +318,6 @@
       object-fit: cover;
       border-radius: 20px;
       margin-bottom: 15px;
-      transition: transform 0.3s ease;
-    }
-
-    .radio-card:hover img {
-      transform: scale(1.02);
     }
 
     .radio-card h3 {
@@ -379,14 +366,6 @@
     .favorite-btn {
       background: linear-gradient(135deg, #f59e0b, #d97706);
       color: white;
-    }
-
-    .favorite-btn.active {
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-    }
-
-    .card-actions button:hover {
-      transform: translateY(-2px);
     }
 
     /* Modal */
@@ -524,49 +503,6 @@
       cursor: pointer;
     }
 
-    /* Skeleton Loading */
-    .skeleton-card {
-      height: 330px;
-      border-radius: 24px;
-      background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-    }
-
-    @keyframes shimmer {
-      0% { background-position: -200% 0; }
-      100% { background-position: 200% 0; }
-    }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      border-radius: 10px;
-    }
-
-    /* Empty State */
-    .empty-state {
-      text-align: center;
-      padding: 80px 20px;
-      color: rgba(255, 255, 255, 0.5);
-    }
-
-    .empty-state i {
-      font-size: 4rem;
-      margin-bottom: 20px;
-      opacity: 0.5;
-    }
-
     /* Responsive */
     @media (max-width: 992px) {
       .app {
@@ -585,14 +521,6 @@
         padding: 15px;
         gap: 15px;
       }
-
-      .player-controls {
-        order: 2;
-      }
-
-      .volume-wrapper {
-        order: 3;
-      }
     }
 
     @media (max-width: 576px) {
@@ -602,10 +530,6 @@
 
       .radio-grid {
         grid-template-columns: 1fr;
-      }
-
-      .topbar h2 {
-        font-size: 1.5rem;
       }
     }
   </style>
@@ -653,9 +577,9 @@
         <button id="addRadioBtn"><i class="fas fa-plus"></i> إضافة محطة</button>
         <input type="text" id="searchInput" placeholder="🔍 بحث عن محطة...">
         <div class="menu">
-          <div class="menu-item active" data-filter="all"><i class="fas fa-home"></i> الرئيسية</div>
-          <div class="menu-item" data-filter="favorites"><i class="fas fa-heart"></i> المفضلة</div>
-          <div class="menu-item" data-filter="recent"><i class="fas fa-history"></i> آخر تشغيل</div>
+          <div class="menu-item active" data-filter="all">🏠 الرئيسية</div>
+          <div class="menu-item" data-filter="favorites">❤️ المفضلة</div>
+          <div class="menu-item" data-filter="recent">🕒 آخر تشغيل</div>
         </div>
       </div>
       <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</button>
@@ -663,13 +587,14 @@
 
     <main class="main-content">
       <div class="topbar">
-        <h2 id="pageTitle">📻 جميع المحطات</h2>
+        <h2>📻 جميع المحطات</h2>
       </div>
       <div class="radio-grid" id="radioGrid">
-        <div class="skeleton-card"></div>
-        <div class="skeleton-card"></div>
-        <div class="skeleton-card"></div>
-        <div class="skeleton-card"></div>
+        <div class="glass-card" style="padding: 40px; text-align: center; grid-column: 1/-1;">
+          <i class="fas fa-info-circle" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
+          <h3>مرحباً بك في تطبيق الراديو</h3>
+          <p style="margin-top: 10px;">قم بإضافة محطاتك المفضلة للبدء</p>
+        </div>
       </div>
     </main>
   </div>
@@ -707,207 +632,241 @@
     </div>
   </div>
 
-  <script type="importmap">
-    {
-      "imports": {
-        "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
-        "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
-        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js",
-        "firebase/storage": "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js"
-      }
-    }
-  </script>
-
-  <script type="module">
-    import { initializeApp } from "firebase/app";
-    import { 
-      getAuth, GoogleAuthProvider, createUserWithEmailAndPassword,
-      signInWithEmailAndPassword, signInWithPopup, sendEmailVerification,
-      sendPasswordResetEmail, onAuthStateChanged, signOut 
-    } from "firebase/auth";
-    import {
-      getFirestore, collection, addDoc, getDocs, deleteDoc, doc,
-      updateDoc, query, orderBy, serverTimestamp
-    } from "firebase/firestore";
-    import {
-      getStorage, ref, uploadBytes, getDownloadURL
-    } from "firebase/storage";
-
-    // Firebase Configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyBRvU198Ov7i6XdQTiKkuPJ-8biyKQt0Eo",
-      authDomain: "radioapp-4f31a.firebaseapp.com",
-      projectId: "radioapp-4f31a",
-      storageBucket: "radioapp-4f31a.firebasestorage.app",
-      messagingSenderId: "109582001862",
-      appId: "1:109582001862:web:0f88fc50166c6d3d3019c7"
-    };
-
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
-    const provider = new GoogleAuthProvider();
-
-    // Splash Screen
+  <script>
+    // Remove splash screen after 2 seconds
     setTimeout(() => {
       const splash = document.getElementById('splash-screen');
       if (splash) {
         splash.style.opacity = '0';
-        setTimeout(() => splash.remove(), 500);
+        setTimeout(() => {
+          splash.style.display = 'none';
+          // Show auth container (for demo without Firebase)
+          document.getElementById('authContainer').classList.remove('hidden');
+        }, 500);
       }
-    }, 2500);
+    }, 2000);
 
-    // DOM Elements
-    const loginCard = document.getElementById('loginCard');
-    const registerCard = document.getElementById('registerCard');
-    const appContainer = document.getElementById('app');
-    const authContainer = document.getElementById('authContainer');
-    const radioGrid = document.getElementById('radioGrid');
-    const miniPlayer = document.getElementById('miniPlayer');
-    const searchInput = document.getElementById('searchInput');
-
-    // Audio Player
-    const audio = new Audio();
-    audio.crossOrigin = 'anonymous';
-    audio.volume = 0.8;
-
-    let radios = [];
+    // Demo mode - Local storage based app (works without Firebase)
+    // This allows you to test the app immediately
+    
+    let radios = JSON.parse(localStorage.getItem('demo_radios')) || [];
     let currentIndex = 0;
     let currentFilter = 'all';
-
-    function showToast(icon, title, timer = 3000) {
+    const audio = new Audio();
+    audio.volume = 0.8;
+    
+    // Sample radio stations
+    if (radios.length === 0) {
+      radios = [
+        {
+          id: '1',
+          name: 'BBC Radio 1',
+          streamUrl: 'https://stream.live.vc.bbcmedia.co.uk/bbc_radio_one',
+          category: 'Music',
+          imageUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/5/5e/BBC_Radio_1_2021.svg/1200px-BBC_Radio_1_2021.svg.png',
+          favorite: false
+        },
+        {
+          id: '2',
+          name: 'Virgin Radio',
+          streamUrl: 'https://radio.virginradio.co.uk/stream',
+          category: 'Pop',
+          imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Virgin_Radio_logo.svg/1200px-Virgin_Radio_logo.svg.png',
+          favorite: false
+        },
+        {
+          id: '3',
+          name: 'Nostalgie',
+          streamUrl: 'https://stream.nostalgie.fr/hls/live.m3u8',
+          category: 'Oldies',
+          imageUrl: 'https://upload.wikimedia.org/wikipedia/fr/thumb/3/3e/Nostalgie_logo.svg/1200px-Nostalgie_logo.svg.png',
+          favorite: false
+        }
+      ];
+      localStorage.setItem('demo_radios', JSON.stringify(radios));
+    }
+    
+    function showToast(icon, title) {
       Swal.fire({
         toast: true,
         position: 'top-end',
         icon: icon,
         title: title,
         showConfirmButton: false,
-        timer: timer,
+        timer: 3000,
         background: '#1e293b',
         color: '#fff'
       });
     }
-
-    // Auth UI
-    document.getElementById('showRegister')?.addEventListener('click', () => {
-      loginCard.classList.add('hidden');
-      registerCard.classList.remove('hidden');
-    });
-
-    document.getElementById('showLogin')?.addEventListener('click', () => {
-      registerCard.classList.add('hidden');
-      loginCard.classList.remove('hidden');
-    });
-
-    // Register
-    document.getElementById('registerBtn')?.addEventListener('click', async () => {
-      const name = document.getElementById('registerName').value;
-      const email = document.getElementById('registerEmail').value;
-      const password = document.getElementById('registerPassword').value;
-      const confirm = document.getElementById('registerConfirmPassword').value;
-
-      if (!name || !email || !password) return showToast('error', 'يرجى تعبئة جميع الحقول');
-      if (password !== confirm) return showToast('error', 'كلمتا المرور غير متطابقتين');
-      if (password.length < 6) return showToast('error', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
-
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await sendEmailVerification(userCredential.user);
-        showToast('success', 'تم إنشاء الحساب! يرجى تفعيل بريدك الإلكتروني');
-        document.getElementById('registerName').value = '';
-        document.getElementById('registerEmail').value = '';
-        document.getElementById('registerPassword').value = '';
-        document.getElementById('registerConfirmPassword').value = '';
-        registerCard.classList.add('hidden');
-        loginCard.classList.remove('hidden');
-      } catch (error) {
-        showToast('error', error.message);
+    
+    function renderRadios() {
+      const radioGrid = document.getElementById('radioGrid');
+      let filteredRadios = [...radios];
+      
+      if (currentFilter === 'favorites') {
+        filteredRadios = radios.filter(r => r.favorite);
+      } else if (currentFilter === 'recent') {
+        const recent = JSON.parse(localStorage.getItem('recentlyPlayed') || '[]');
+        filteredRadios = recent.map(id => radios.find(r => r.id === id)).filter(Boolean);
       }
-    });
-
-    // Login
-    document.getElementById('loginBtn')?.addEventListener('click', async () => {
-      const email = document.getElementById('loginEmail').value;
-      const password = document.getElementById('loginPassword').value;
-
-      if (!email || !password) return showToast('error', 'يرجى إدخال البريد الإلكتروني وكلمة المرور');
-
-      try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        if (!userCredential.user.emailVerified) {
-          showToast('warning', 'يرجى تفعيل البريد الإلكتروني أولاً');
-          await signOut(auth);
-          return;
-        }
-        showToast('success', 'مرحباً بك!');
-        document.getElementById('loginEmail').value = '';
-        document.getElementById('loginPassword').value = '';
-      } catch (error) {
-        showToast('error', 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
+      
+      if (filteredRadios.length === 0) {
+        radioGrid.innerHTML = `
+          <div class="glass-card" style="padding: 40px; text-align: center; grid-column: 1/-1;">
+            <i class="fas fa-radio" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
+            <h3>لا توجد محطات</h3>
+            <p style="margin-top: 10px;">اضغط على "إضافة محطة" لإضافة محطتك الأولى</p>
+          </div>
+        `;
+        return;
       }
-    });
-
-    // Google Login
-    document.getElementById('googleLoginBtn')?.addEventListener('click', async () => {
-      try {
-        await signInWithPopup(auth, provider);
-        showToast('success', 'تم تسجيل الدخول عبر Google');
-      } catch (error) {
-        showToast('error', error.message);
+      
+      radioGrid.innerHTML = filteredRadios.map((radio, idx) => `
+        <div class="radio-card glass-card">
+          <img src="${radio.imageUrl}" alt="${radio.name}" onerror="this.src='https://via.placeholder.com/300x200?text=Radio'">
+          <h3>${radio.name}</h3>
+          <p><i class="fas fa-tag"></i> ${radio.category}</p>
+          <div class="card-actions">
+            <button class="play-btn" onclick="playRadio('${radio.id}')">
+              <i class="fas fa-play"></i> تشغيل
+            </button>
+            <button class="favorite-btn" onclick="toggleFavorite('${radio.id}')">
+              <i class="fas fa-heart"></i> ${radio.favorite ? 'مفضلة' : 'مفضلة'}
+            </button>
+            <button class="edit-btn" onclick="editRadio('${radio.id}')">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="delete-btn" onclick="deleteRadio('${radio.id}')">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    window.playRadio = function(id) {
+      const station = radios.find(r => r.id === id);
+      if (!station) return;
+      
+      currentIndex = radios.findIndex(r => r.id === id);
+      audio.src = station.streamUrl;
+      audio.play().catch(e => showToast('error', 'لا يمكن تشغيل هذا الرابط'));
+      
+      document.getElementById('miniPlayer').classList.remove('hidden');
+      document.getElementById('playerTitle').innerText = station.name;
+      document.getElementById('playerImage').src = station.imageUrl;
+      document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-pause"></i>';
+      
+      // Save to recently played
+      let recent = JSON.parse(localStorage.getItem('recentlyPlayed') || '[]');
+      recent = [id, ...recent.filter(i => i !== id)].slice(0, 10);
+      localStorage.setItem('recentlyPlayed', JSON.stringify(recent));
+      
+      showToast('success', `تشغيل ${station.name}`);
+    };
+    
+    window.toggleFavorite = function(id) {
+      const index = radios.findIndex(r => r.id === id);
+      if (index !== -1) {
+        radios[index].favorite = !radios[index].favorite;
+        localStorage.setItem('demo_radios', JSON.stringify(radios));
+        renderRadios();
+        showToast('success', radios[index].favorite ? 'تمت الإضافة إلى المفضلة' : 'تمت الإزالة من المفضلة');
       }
-    });
-
-    // Forgot Password
-    document.getElementById('forgotPasswordBtn')?.addEventListener('click', async () => {
-      const { value: email } = await Swal.fire({
-        title: 'استعادة كلمة المرور',
-        input: 'email',
-        inputPlaceholder: 'أدخل بريدك الإلكتروني',
+    };
+    
+    window.deleteRadio = function(id) {
+      Swal.fire({
+        title: 'هل أنت متأكد؟',
+        text: 'لن تتمكن من استعادة هذه المحطة!',
+        icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: 'إرسال',
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#22c55e',
+        confirmButtonText: 'نعم، احذف',
         cancelButtonText: 'إلغاء'
-      });
-
-      if (email) {
-        try {
-          await sendPasswordResetEmail(auth, email);
-          showToast('success', 'تم إرسال رابط إعادة التعيين إلى بريدك');
-        } catch (error) {
-          showToast('error', 'البريد الإلكتروني غير موجود');
+      }).then((result) => {
+        if (result.isConfirmed) {
+          radios = radios.filter(r => r.id !== id);
+          localStorage.setItem('demo_radios', JSON.stringify(radios));
+          renderRadios();
+          showToast('success', 'تم حذف المحطة بنجاح');
         }
+      });
+    };
+    
+    window.editRadio = async function(id) {
+      const radio = radios.find(r => r.id === id);
+      const { value: formValues } = await Swal.fire({
+        title: 'تعديل المحطة',
+        html: `
+          <input id="swal-name" class="swal2-input" placeholder="اسم المحطة" value="${radio.name}">
+          <input id="swal-url" class="swal2-input" placeholder="رابط البث" value="${radio.streamUrl}">
+          <input id="swal-category" class="swal2-input" placeholder="التصنيف" value="${radio.category}">
+        `,
+        focusConfirm: false,
+        preConfirm: () => {
+          return {
+            name: document.getElementById('swal-name').value,
+            streamUrl: document.getElementById('swal-url').value,
+            category: document.getElementById('swal-category').value
+          }
+        }
+      });
+      
+      if (formValues && formValues.name && formValues.streamUrl) {
+        const index = radios.findIndex(r => r.id === id);
+        radios[index].name = formValues.name;
+        radios[index].streamUrl = formValues.streamUrl;
+        radios[index].category = formValues.category || 'عام';
+        localStorage.setItem('demo_radios', JSON.stringify(radios));
+        renderRadios();
+        showToast('success', 'تم تحديث المحطة');
       }
-    });
-
-    // Auth State
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        authContainer.classList.add('hidden');
-        appContainer.classList.remove('hidden');
-        await loadRadios();
-        loadLastPlayed();
+    };
+    
+    // Event Listeners
+    document.getElementById('playPauseBtn')?.addEventListener('click', () => {
+      if (audio.paused) {
+        audio.play();
+        document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-pause"></i>';
       } else {
-        authContainer.classList.remove('hidden');
-        appContainer.classList.add('hidden');
-        miniPlayer.classList.add('hidden');
-        radios = [];
+        audio.pause();
+        document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-play"></i>';
       }
     });
-
-    // Logout
-    document.getElementById('logoutBtn')?.addEventListener('click', async () => {
-      await signOut(auth);
-      showToast('success', 'تم تسجيل الخروج');
-      audio.pause();
-      audio.src = '';
+    
+    document.getElementById('prevBtn')?.addEventListener('click', () => {
+      if (radios.length > 0) {
+        currentIndex = (currentIndex - 1 + radios.length) % radios.length;
+        playRadio(radios[currentIndex].id);
+      }
     });
-
-    // Modal
+    
+    document.getElementById('nextBtn')?.addEventListener('click', () => {
+      if (radios.length > 0) {
+        currentIndex = (currentIndex + 1) % radios.length;
+        playRadio(radios[currentIndex].id);
+      }
+    });
+    
+    document.getElementById('volumeSlider')?.addEventListener('input', (e) => {
+      audio.volume = e.target.value;
+    });
+    
+    document.getElementById('searchInput')?.addEventListener('input', (e) => {
+      const value = e.target.value.toLowerCase();
+      const cards = document.querySelectorAll('.radio-card');
+      cards.forEach(card => {
+        const title = card.querySelector('h3')?.innerText.toLowerCase() || '';
+        card.style.display = title.includes(value) ? 'block' : 'none';
+      });
+    });
+    
     document.getElementById('addRadioBtn')?.addEventListener('click', () => {
       document.getElementById('radioModal').classList.remove('hidden');
     });
-
+    
     document.getElementById('closeModalBtn')?.addEventListener('click', () => {
       document.getElementById('radioModal').classList.add('hidden');
       document.getElementById('radioName').value = '';
@@ -915,98 +874,119 @@
       document.getElementById('radioCategory').value = '';
       document.getElementById('radioImage').value = '';
     });
-
-    // Add Radio
-    document.getElementById('saveRadioBtn')?.addEventListener('click', async () => {
+    
+    document.getElementById('saveRadioBtn')?.addEventListener('click', () => {
       const name = document.getElementById('radioName').value;
       const streamUrl = document.getElementById('radioUrl').value;
       const category = document.getElementById('radioCategory').value || 'عام';
       const imageFile = document.getElementById('radioImage').files[0];
-
-      if (!name || !streamUrl || !imageFile) {
-        return showToast('warning', 'يرجى تعبئة جميع الحقول');
-      }
-
-      try {
-        const imageRef = ref(storage, `radios/${Date.now()}_${imageFile.name}`);
-        await uploadBytes(imageRef, imageFile);
-        const imageUrl = await getDownloadURL(imageRef);
-
-        await addDoc(collection(db, 'radios'), {
-          name, streamUrl, category, imageUrl,
-          createdBy: auth.currentUser.uid,
-          createdAt: serverTimestamp(),
-          favorite: false
-        });
-
-        showToast('success', 'تمت إضافة المحطة بنجاح');
-        document.getElementById('radioModal').classList.add('hidden');
-        document.getElementById('radioName').value = '';
-        document.getElementById('radioUrl').value = '';
-        document.getElementById('radioCategory').value = '';
-        document.getElementById('radioImage').value = '';
-        await loadRadios();
-      } catch (error) {
-        showToast('error', error.message);
-      }
-    });
-
-    // Load Radios
-    async function loadRadios() {
-      radioGrid.innerHTML = '<div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div>';
-
-      try {
-        const q = query(collection(db, 'radios'), orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(q);
-        
-        radios = [];
-        querySnapshot.forEach((docItem) => {
-          radios.push({ id: docItem.id, ...docItem.data() });
-        });
-
-        if (radios.length === 0) {
-          radioGrid.innerHTML = '<div class="empty-state"><i class="fas fa-radio"></i><h3>لا توجد محطات بعد</h3><p>أضف محطتك الأولى!</p></div>';
-          return;
-        }
-
-        renderRadios();
-      } catch (error) {
-        console.error(error);
-        radioGrid.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>حدث خطأ</h3><p>يرجى المحاولة مرة أخرى</p></div>';
-      }
-    }
-
-    function renderRadios() {
-      let filteredRadios = [...radios];
       
-      if (currentFilter === 'favorites') {
-        filteredRadios = radios.filter(r => r.favorite === true);
-      } else if (currentFilter === 'recent') {
-        const recent = JSON.parse(localStorage.getItem('recentlyPlayed') || '[]');
-        filteredRadios = recent.map(r => r.id).map(id => radios.find(r => r.id === id)).filter(Boolean);
+      if (!name || !streamUrl) {
+        return showToast('warning', 'يرجى إدخال اسم المحطة ورابط البث');
       }
-
-      if (filteredRadios.length === 0) {
-        radioGrid.innerHTML = '<div class="empty-state"><i class="fas fa-heart"></i><h3>لا توجد محطات</h3><p>أضف محطات إلى المفضلة</p></div>';
-        return;
+      
+      const newRadio = {
+        id: Date.now().toString(),
+        name: name,
+        streamUrl: streamUrl,
+        category: category,
+        imageUrl: imageFile ? URL.createObjectURL(imageFile) : 'https://via.placeholder.com/300x200?text=Radio',
+        favorite: false
+      };
+      
+      radios.push(newRadio);
+      localStorage.setItem('demo_radios', JSON.stringify(radios));
+      renderRadios();
+      document.getElementById('radioModal').classList.add('hidden');
+      showToast('success', 'تمت إضافة المحطة بنجاح');
+      
+      // Clear form
+      document.getElementById('radioName').value = '';
+      document.getElementById('radioUrl').value = '';
+      document.getElementById('radioCategory').value = '';
+      document.getElementById('radioImage').value = '';
+    });
+    
+    // Menu filter
+    document.querySelectorAll('.menu-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        currentFilter = item.getAttribute('data-filter');
+        renderRadios();
+      });
+    });
+    
+    // Auth UI (Demo - just show app after login click)
+    document.getElementById('showRegister')?.addEventListener('click', () => {
+      document.getElementById('loginCard').classList.add('hidden');
+      document.getElementById('registerCard').classList.remove('hidden');
+    });
+    
+    document.getElementById('showLogin')?.addEventListener('click', () => {
+      document.getElementById('registerCard').classList.add('hidden');
+      document.getElementById('loginCard').classList.remove('hidden');
+    });
+    
+    document.getElementById('loginBtn')?.addEventListener('click', () => {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      
+      if (!email || !password) {
+        return showToast('error', 'يرجى إدخال البريد الإلكتروني وكلمة المرور');
       }
-
-      radioGrid.innerHTML = filteredRadios.map((radio, idx) => `
-        <div class="radio-card glass-card">
-          <img loading="lazy" src="${radio.imageUrl}" alt="${radio.name}" onerror="this.src='https://via.placeholder.com/300x200?text=Radio'">
-          <h3>${escapeHtml(radio.name)}</h3>
-          <p><i class="fas fa-tag"></i> ${escapeHtml(radio.category || 'عام')}</p>
-          <div class="card-actions">
-            <button class="play-btn" onclick="window.playRadioByIndex(${radios.findIndex(r => r.id === radio.id)})">
-              <i class="fas fa-play"></i> تشغيل
-            </button>
-            <button class="favorite-btn ${radio.favorite ? 'active' : ''}" onclick="window.toggleFavorite('${radio.id}')">
-              <i class="fas fa-heart"></i>
-            </button>
-            <button class="edit-btn" onclick="window.editRadio('${radio.id}')">
-              <i class="fas fa-edit"></i>
-            </button>
-            <button class="delete-btn" onclick="window.deleteRadio('${radio.id}')">
-              <i class="fas fa-trash"></i>
-            </button>
-         
+      
+      // Demo login - just show the app
+      document.getElementById('authContainer').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      renderRadios();
+      showToast('success', 'مرحباً بك في تطبيق الراديو!');
+    });
+    
+    document.getElementById('googleLoginBtn')?.addEventListener('click', () => {
+      document.getElementById('authContainer').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      renderRadios();
+      showToast('success', 'تم تسجيل الدخول عبر Google (وضع التجربة)');
+    });
+    
+    document.getElementById('registerBtn')?.addEventListener('click', () => {
+      const name = document.getElementById('registerName').value;
+      const email = document.getElementById('registerEmail').value;
+      const password = document.getElementById('registerPassword').value;
+      const confirm = document.getElementById('registerConfirmPassword').value;
+      
+      if (!name || !email || !password) {
+        return showToast('error', 'يرجى تعبئة جميع الحقول');
+      }
+      
+      if (password !== confirm) {
+        return showToast('error', 'كلمتا المرور غير متطابقتين');
+      }
+      
+      showToast('success', 'تم إنشاء الحساب بنجاح! يرجى تسجيل الدخول');
+      document.getElementById('registerCard').classList.add('hidden');
+      document.getElementById('loginCard').classList.remove('hidden');
+    });
+    
+    document.getElementById('forgotPasswordBtn')?.addEventListener('click', () => {
+      Swal.fire({
+        title: 'استعادة كلمة المرور',
+        text: 'سيتم إرسال رابط إعادة التعيين إلى بريدك الإلكتروني',
+        icon: 'info',
+        confirmButtonText: 'حسناً'
+      });
+    });
+    
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+      document.getElementById('app').classList.add('hidden');
+      document.getElementById('authContainer').classList.remove('hidden');
+      audio.pause();
+      showToast('success', 'تم تسجيل الخروج');
+    });
+    
+    // Initial render
+    renderRadios();
+  </script>
+</body>
+</html>
