@@ -1,34 +1,28 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>🎧 Radio Streaming App | Live Radio</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎧 Cloud Radio | Supabase</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: 'Cairo', sans-serif;
+      font-family: 'Inter', sans-serif;
     }
 
     body {
       background: linear-gradient(135deg, #0f172a, #020617);
       color: white;
-      overflow-x: hidden;
       min-height: 100vh;
     }
 
-    .hidden {
-      display: none !important;
-    }
+    .hidden { display: none !important; }
 
     /* Splash Screen */
     #splash-screen {
@@ -36,71 +30,38 @@
       inset: 0;
       background: linear-gradient(135deg, #020617, #0f172a);
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 9999;
-      transition: opacity 0.5s ease;
-    }
-
-    .loader-wrapper {
-      text-align: center;
-      animation: fadeInUp 0.8s ease;
     }
 
     .loader {
-      width: 100px;
-      height: 100px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
-      border: 4px solid rgba(34, 197, 94, 0.1);
+      border: 4px solid rgba(34,197,94,0.1);
       border-top: 4px solid #22c55e;
       border-right: 4px solid #3b82f6;
-      animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
-      margin: auto;
-    }
-
-    .loader-wrapper h1 {
-      margin-top: 30px;
-      font-size: 2rem;
-      letter-spacing: 8px;
-      background: linear-gradient(135deg, #22c55e, #3b82f6);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      animation: spin 1s ease infinite;
+      margin-bottom: 20px;
     }
 
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
 
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    #loading-status {
+      color: rgba(255,255,255,0.7);
+      font-size: 14px;
     }
 
     /* Glassmorphism */
     .glass-card {
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255,255,255,0.05);
       backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
     }
 
     /* Auth Container */
@@ -110,26 +71,17 @@
       align-items: center;
       justify-content: center;
       padding: 20px;
-      position: relative;
     }
 
     .auth-card {
       width: 100%;
       max-width: 450px;
-      border-radius: 32px;
-      padding: 50px 40px;
-      animation: fadeInUp 0.6s ease;
-      transition: transform 0.3s ease;
-    }
-
-    .auth-card:hover {
-      transform: translateY(-5px);
+      padding: 40px;
     }
 
     .auth-card h2 {
-      margin-bottom: 30px;
       text-align: center;
-      font-size: 2rem;
+      margin-bottom: 30px;
       background: linear-gradient(135deg, #22c55e, #3b82f6);
       -webkit-background-clip: text;
       background-clip: text;
@@ -138,136 +90,117 @@
 
     .auth-card input {
       width: 100%;
-      padding: 16px 20px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      outline: none;
-      border-radius: 16px;
-      margin-bottom: 18px;
-      background: rgba(255, 255, 255, 0.08);
+      padding: 14px;
+      margin-bottom: 15px;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      border-radius: 12px;
       color: white;
-      font-size: 1rem;
-      transition: all 0.3s ease;
+      font-size: 16px;
     }
 
     .auth-card input:focus {
-      border-color: #22c55e;
-      background: rgba(255, 255, 255, 0.12);
+      outline: none;
+      border: 1px solid #22c55e;
     }
 
     .auth-card button {
       width: 100%;
-      padding: 16px;
-      border: none;
-      border-radius: 16px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 1rem;
+      padding: 14px;
       background: linear-gradient(135deg, #22c55e, #16a34a);
+      border: none;
+      border-radius: 12px;
       color: white;
-      transition: all 0.3s ease;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 16px;
+      transition: transform 0.2s;
     }
 
     .auth-card button:hover {
       transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
-    }
-
-    .google-btn {
-      background: linear-gradient(135deg, #ef4444, #dc2626) !important;
-      margin-top: 10px;
     }
 
     .auth-card p {
-      margin-top: 20px;
       text-align: center;
-      color: rgba(255, 255, 255, 0.7);
+      margin-top: 20px;
+      color: rgba(255,255,255,0.7);
     }
 
     .auth-card span {
       color: #22c55e;
       cursor: pointer;
-      font-weight: bold;
-      margin-right: 5px;
     }
 
-    /* App Layout */
+    /* Main App */
     .app {
       display: flex;
       min-height: 100vh;
     }
 
     .sidebar {
-      width: 300px;
-      padding: 30px 25px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+      width: 280px;
+      padding: 25px;
       position: sticky;
       top: 0;
       height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
       overflow-y: auto;
     }
 
     .sidebar h1 {
-      margin-bottom: 30px;
-      font-size: 1.8rem;
-      background: linear-gradient(135deg, #22c55e, #3b82f6);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      margin-bottom: 25px;
+      font-size: 1.5rem;
     }
 
     .sidebar button {
-      border: none;
-      padding: 14px;
-      border-radius: 14px;
-      cursor: pointer;
+      width: 100%;
+      padding: 12px;
       margin-bottom: 15px;
       background: linear-gradient(135deg, #22c55e, #16a34a);
+      border: none;
+      border-radius: 12px;
       color: white;
       font-weight: bold;
-      font-size: 1rem;
-      transition: all 0.3s ease;
+      cursor: pointer;
+      transition: transform 0.2s;
     }
 
     .sidebar button:hover {
       transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(34, 197, 94, 0.3);
     }
 
     #searchInput {
       width: 100%;
-      padding: 14px;
-      border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: rgba(255, 255, 255, 0.08);
+      padding: 12px;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      border-radius: 12px;
       color: white;
       margin-bottom: 20px;
-      font-size: 0.95rem;
     }
 
-    .menu {
-      margin-top: 20px;
+    #searchInput:focus {
+      outline: none;
+      border: 1px solid #22c55e;
     }
 
     .menu-item {
-      padding: 14px 18px;
+      padding: 12px;
+      margin-bottom: 5px;
       border-radius: 12px;
-      margin-bottom: 8px;
       cursor: pointer;
-      transition: all 0.3s ease;
-      color: rgba(255, 255, 255, 0.8);
-      font-weight: 500;
+      transition: all 0.2s;
     }
 
     .menu-item:hover {
-      background: rgba(255, 255, 255, 0.1);
-      transform: translateX(-5px);
+      background: rgba(255,255,255,0.1);
     }
 
     .menu-item.active {
-      background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(59, 130, 246, 0.2));
-      color: white;
+      background: rgba(34,197,94,0.2);
       border-left: 3px solid #22c55e;
     }
 
@@ -277,154 +210,130 @@
 
     .main-content {
       flex: 1;
-      padding: 30px;
+      padding: 25px;
       overflow-y: auto;
     }
 
     .topbar {
-      margin-bottom: 30px;
+      margin-bottom: 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
     }
 
     .topbar h2 {
-      font-size: 2rem;
       background: linear-gradient(135deg, #22c55e, #3b82f6);
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
     }
 
-    /* Radio Grid */
+    .sync-status {
+      font-size: 12px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      background: rgba(34,197,94,0.2);
+      color: #22c55e;
+    }
+
+    .sync-status.offline {
+      background: rgba(239,68,68,0.2);
+      color: #ef4444;
+    }
+
     .radio-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 25px;
+      gap: 20px;
     }
 
     .radio-card {
-      padding: 20px;
-      border-radius: 24px;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      animation: fadeIn 0.5s ease;
+      padding: 15px;
+      transition: transform 0.3s;
+      cursor: pointer;
     }
 
     .radio-card:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      transform: translateY(-5px);
     }
 
     .radio-card img {
       width: 100%;
-      height: 200px;
+      height: 180px;
       object-fit: cover;
-      border-radius: 20px;
-      margin-bottom: 15px;
-    }
-
-    .radio-card h3 {
-      margin-bottom: 8px;
-      font-size: 1.2rem;
-    }
-
-    .radio-card p {
-      color: rgba(255, 255, 255, 0.6);
-      font-size: 0.85rem;
-      margin-bottom: 15px;
+      border-radius: 16px;
+      margin-bottom: 12px;
     }
 
     .card-actions {
       display: flex;
       gap: 8px;
-      flex-wrap: wrap;
+      margin-top: 12px;
     }
 
     .card-actions button {
       flex: 1;
+      padding: 8px;
       border: none;
-      padding: 10px;
-      border-radius: 12px;
+      border-radius: 10px;
       cursor: pointer;
       font-weight: bold;
-      font-size: 0.85rem;
-      transition: all 0.3s ease;
+      transition: transform 0.2s;
     }
 
-    .play-btn {
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      color: white;
+    .card-actions button:hover {
+      transform: translateY(-2px);
     }
 
-    .delete-btn {
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      color: white;
-    }
-
-    .edit-btn {
-      background: linear-gradient(135deg, #3b82f6, #2563eb);
-      color: white;
-    }
-
-    .favorite-btn {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      color: white;
-    }
+    .play-btn { background: #22c55e; color: white; }
+    .delete-btn { background: #ef4444; color: white; }
+    .edit-btn { background: #3b82f6; color: white; }
+    .favorite-btn { background: #f59e0b; color: white; }
+    .favorite-btn.active { background: #ef4444; }
 
     /* Modal */
     .modal {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0,0,0,0.8);
       backdrop-filter: blur(10px);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 1000;
-      animation: fadeIn 0.3s ease;
     }
 
     .modal-content {
       width: 100%;
-      max-width: 550px;
-      padding: 40px;
-      border-radius: 32px;
+      max-width: 500px;
+      padding: 30px;
     }
 
     .modal-content h2 {
-      margin-bottom: 25px;
       text-align: center;
+      margin-bottom: 20px;
     }
 
     .modal-content input {
       width: 100%;
-      padding: 14px;
-      border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: rgba(255, 255, 255, 0.08);
+      padding: 12px;
+      margin-bottom: 12px;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      border-radius: 10px;
       color: white;
-      margin-bottom: 15px;
-    }
-
-    .modal-content input[type="file"] {
-      padding: 10px;
     }
 
     .modal-content button {
       width: 100%;
-      padding: 14px;
-      border-radius: 14px;
+      padding: 12px;
+      margin-top: 10px;
       border: none;
+      border-radius: 10px;
       cursor: pointer;
       font-weight: bold;
-      margin-top: 10px;
-    }
-
-    #saveRadioBtn {
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      color: white;
-    }
-
-    #closeModalBtn {
-      background: rgba(255, 255, 255, 0.1);
-      color: white;
     }
 
     /* Mini Player */
@@ -433,57 +342,44 @@
       bottom: 0;
       left: 0;
       right: 0;
-      height: 90px;
-      background: rgba(15, 23, 42, 0.95);
+      height: 80px;
+      background: rgba(15,23,42,0.95);
       backdrop-filter: blur(20px);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 30px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 0 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
       z-index: 1000;
-      animation: fadeInUp 0.5s ease;
     }
 
     .player-left {
       display: flex;
       align-items: center;
-      gap: 15px;
+      gap: 12px;
     }
 
     .player-left img {
-      width: 60px;
-      height: 60px;
-      border-radius: 12px;
+      width: 50px;
+      height: 50px;
+      border-radius: 10px;
       object-fit: cover;
-    }
-
-    .player-left h4 {
-      font-size: 1rem;
-      margin-bottom: 5px;
-    }
-
-    .player-left span {
-      font-size: 0.8rem;
-      color: rgba(255, 255, 255, 0.6);
     }
 
     .player-controls {
       display: flex;
-      align-items: center;
       gap: 15px;
     }
 
     .player-controls button {
-      width: 45px;
-      height: 45px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       border: none;
-      cursor: pointer;
-      background: linear-gradient(135deg, #22c55e, #16a34a);
+      background: #22c55e;
       color: white;
-      font-size: 18px;
-      transition: all 0.3s ease;
+      cursor: pointer;
+      transition: transform 0.2s;
     }
 
     .player-controls button:hover {
@@ -499,38 +395,34 @@
     .volume-wrapper input {
       width: 100px;
       height: 4px;
-      border-radius: 5px;
       cursor: pointer;
     }
 
-    /* Responsive */
-    @media (max-width: 992px) {
-      .app {
-        flex-direction: column;
-      }
-
-      .sidebar {
-        width: 100%;
-        height: auto;
-        position: relative;
-      }
-
-      .mini-player {
-        flex-direction: column;
-        height: auto;
-        padding: 15px;
-        gap: 15px;
-      }
+    .skeleton-card {
+      height: 280px;
+      border-radius: 20px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
     }
 
-    @media (max-width: 576px) {
-      .auth-card, .modal-content {
-        padding: 30px 20px;
-      }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
 
-      .radio-grid {
-        grid-template-columns: 1fr;
-      }
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: rgba(255,255,255,0.5);
+    }
+
+    @media (max-width: 768px) {
+      .app { flex-direction: column; }
+      .sidebar { width: 100%; height: auto; position: relative; }
+      .mini-player { flex-direction: column; height: auto; gap: 10px; padding: 15px; }
+      .player-controls { order: 2; }
+      .volume-wrapper { order: 3; }
     }
   </style>
 </head>
@@ -538,34 +430,28 @@
 
   <!-- Splash Screen -->
   <div id="splash-screen">
-    <div class="loader-wrapper">
-      <div class="loader"></div>
-      <h1>🎧 RADIO LIVE</h1>
-    </div>
+    <div class="loader"></div>
+    <div id="loading-status">Connecting to Supabase...</div>
   </div>
 
   <!-- Auth Container -->
-  <div class="auth-container" id="authContainer">
+  <div class="auth-container hidden" id="authContainer">
     <div class="glass-card auth-card" id="loginCard">
-      <h2><i class="fas fa-headphones"></i> تسجيل الدخول</h2>
-      <input type="email" id="loginEmail" placeholder="📧 البريد الإلكتروني">
-      <input type="password" id="loginPassword" placeholder="🔒 كلمة المرور">
-      <button id="loginBtn"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</button>
-      <button class="google-btn" id="googleLoginBtn">
-        <i class="fab fa-google"></i> تسجيل الدخول عبر Google
-      </button>
-      <p>ليس لديك حساب؟ <span id="showRegister">إنشاء حساب</span></p>
-      <p><span id="forgotPasswordBtn" style="color:#f59e0b;">نسيت كلمة المرور؟</span></p>
+      <h2>🔐 Sign In</h2>
+      <input type="email" id="loginEmail" placeholder="Email address">
+      <input type="password" id="loginPassword" placeholder="Password">
+      <button id="loginBtn">Sign In</button>
+      <p>Don't have an account? <span id="showRegister">Create Account</span></p>
     </div>
 
     <div class="glass-card auth-card hidden" id="registerCard">
-      <h2><i class="fas fa-user-plus"></i> إنشاء حساب</h2>
-      <input type="text" id="registerName" placeholder="👤 الاسم الكامل">
-      <input type="email" id="registerEmail" placeholder="📧 البريد الإلكتروني">
-      <input type="password" id="registerPassword" placeholder="🔒 كلمة المرور">
-      <input type="password" id="registerConfirmPassword" placeholder="✅ تأكيد كلمة المرور">
-      <button id="registerBtn"><i class="fas fa-check-circle"></i> إنشاء حساب</button>
-      <p>لديك حساب بالفعل؟ <span id="showLogin">تسجيل الدخول</span></p>
+      <h2>📝 Create Account</h2>
+      <input type="text" id="registerName" placeholder="Full name">
+      <input type="email" id="registerEmail" placeholder="Email address">
+      <input type="password" id="registerPassword" placeholder="Password">
+      <input type="password" id="registerConfirmPassword" placeholder="Confirm password">
+      <button id="registerBtn">Create Account</button>
+      <p>Already have an account? <span id="showLogin">Sign In</span></p>
     </div>
   </div>
 
@@ -573,117 +459,108 @@
   <div class="app hidden" id="app">
     <aside class="sidebar glass-card">
       <div>
-        <h1><i class="fas fa-radio"></i> RADIO</h1>
-        <button id="addRadioBtn"><i class="fas fa-plus"></i> إضافة محطة</button>
-        <input type="text" id="searchInput" placeholder="🔍 بحث عن محطة...">
+        <h1>🎙️ CLOUD RADIO</h1>
+        <button id="addRadioBtn">+ Add Station</button>
+        <input type="text" id="searchInput" placeholder="Search...">
         <div class="menu">
-          <div class="menu-item active" data-filter="all">🏠 الرئيسية</div>
-          <div class="menu-item" data-filter="favorites">❤️ المفضلة</div>
-          <div class="menu-item" data-filter="recent">🕒 آخر تشغيل</div>
+          <div class="menu-item active" data-filter="all">🏠 All Stations</div>
+          <div class="menu-item" data-filter="favorites">❤️ Favorites</div>
+          <div class="menu-item" data-filter="recent">🕒 Recently Played</div>
         </div>
       </div>
-      <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</button>
+      <button id="logoutBtn" class="logout-btn">🚪 Sign Out</button>
     </aside>
 
     <main class="main-content">
       <div class="topbar">
-        <h2>📻 جميع المحطات</h2>
+        <h2 id="pageTitle">📻 All Radio Stations</h2>
+        <div class="sync-status" id="syncStatus">
+          <i class="fas fa-cloud-upload-alt"></i> Synced
+        </div>
       </div>
       <div class="radio-grid" id="radioGrid">
-        <div class="glass-card" style="padding: 40px; text-align: center; grid-column: 1/-1;">
-          <i class="fas fa-info-circle" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
-          <h3>مرحباً بك في تطبيق الراديو</h3>
-          <p style="margin-top: 10px;">قم بإضافة محطاتك المفضلة للبدء</p>
-        </div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
       </div>
     </main>
   </div>
 
-  <!-- Add Radio Modal -->
+  <!-- Add Station Modal -->
   <div class="modal hidden" id="radioModal">
     <div class="modal-content glass-card">
-      <h2><i class="fas fa-plus-circle"></i> إضافة محطة جديدة</h2>
-      <input type="text" id="radioName" placeholder="📻 اسم المحطة">
-      <input type="text" id="radioUrl" placeholder="🔗 رابط البث المباشر">
-      <input type="text" id="radioCategory" placeholder="🏷️ التصنيف">
+      <h2>➕ Add New Station</h2>
+      <input type="text" id="radioName" placeholder="Station name">
+      <input type="text" id="radioUrl" placeholder="Stream URL (mp3/m3u8)">
+      <input type="text" id="radioCategory" placeholder="Category (e.g., Music, News)">
       <input type="file" id="radioImage" accept="image/*">
-      <button id="saveRadioBtn"><i class="fas fa-save"></i> حفظ المحطة</button>
-      <button id="closeModalBtn"><i class="fas fa-times"></i> إغلاق</button>
+      <button id="saveRadioBtn">💾 Save Station</button>
+      <button id="closeModalBtn">❌ Cancel</button>
     </div>
   </div>
 
   <!-- Mini Player -->
   <div class="mini-player hidden" id="miniPlayer">
     <div class="player-left">
-      <img id="playerImage" src="" alt="station">
+      <img id="playerImage" src="">
       <div>
-        <h4 id="playerTitle">لا توجد محطة</h4>
-        <span>🎵 راديو مباشر</span>
+        <h4 id="playerTitle">No station selected</h4>
+        <span>🎵 Live Radio</span>
       </div>
     </div>
     <div class="player-controls">
-      <button id="prevBtn"><i class="fas fa-backward"></i></button>
-      <button id="playPauseBtn"><i class="fas fa-play"></i></button>
-      <button id="nextBtn"><i class="fas fa-forward"></i></button>
+      <button id="prevBtn">⏮</button>
+      <button id="playPauseBtn">▶</button>
+      <button id="nextBtn">⏭</button>
     </div>
     <div class="volume-wrapper">
-      <i class="fas fa-volume-up"></i>
-      <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.8">
+      🔊 <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.8">
     </div>
   </div>
 
   <script>
-    // Remove splash screen after 2 seconds
-    setTimeout(() => {
-      const splash = document.getElementById('splash-screen');
-      if (splash) {
-        splash.style.opacity = '0';
-        setTimeout(() => {
-          splash.style.display = 'none';
-          // Show auth container (for demo without Firebase)
-          document.getElementById('authContainer').classList.remove('hidden');
-        }, 500);
-      }
-    }, 2000);
-
-    // Demo mode - Local storage based app (works without Firebase)
-    // This allows you to test the app immediately
+    // ============================================
+    // 🔑 IMPORTANT: Replace with your Supabase credentials
+    // Get them from: Supabase Dashboard → Project Settings → API
+    // ============================================
+    const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';  // ← CHANGE THIS
+    const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';                // ← CHANGE THIS
     
-    let radios = JSON.parse(localStorage.getItem('demo_radios')) || [];
-    let currentIndex = 0;
+    if (SUPABASE_URL === 'https://YOUR_PROJECT.supabase.co') {
+      console.error('❌ Please set your Supabase URL and Anon Key in the script!');
+      document.getElementById('loading-status').innerHTML = '⚠️ Please configure Supabase credentials first!';
+    }
+    
+    const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    let currentUser = null;
+    let radios = [];
     let currentFilter = 'all';
+    let currentPlayingId = null;
+    let realtimeChannel = null;
     const audio = new Audio();
     audio.volume = 0.8;
     
-    // Sample radio stations
-    if (radios.length === 0) {
-      radios = [
-        {
-          id: '1',
-          name: 'BBC Radio 1',
-          streamUrl: 'https://stream.live.vc.bbcmedia.co.uk/bbc_radio_one',
-          category: 'Music',
-          imageUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/5/5e/BBC_Radio_1_2021.svg/1200px-BBC_Radio_1_2021.svg.png',
-          favorite: false
-        },
-        {
-          id: '2',
-          name: 'Virgin Radio',
-          streamUrl: 'https://radio.virginradio.co.uk/stream',
-          category: 'Pop',
-          imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Virgin_Radio_logo.svg/1200px-Virgin_Radio_logo.svg.png',
-          favorite: false
-        },
-        {
-          id: '3',
-          name: 'Nostalgie',
-          streamUrl: 'https://stream.nostalgie.fr/hls/live.m3u8',
-          category: 'Oldies',
-          imageUrl: 'https://upload.wikimedia.org/wikipedia/fr/thumb/3/3e/Nostalgie_logo.svg/1200px-Nostalgie_logo.svg.png',
-          favorite: false
+    // Update loading status
+    function updateLoadingStatus(message, isError = false) {
+      const statusEl = document.getElementById('loading-status');
+      if (statusEl) {
+        statusEl.innerHTML = message;
+        if (isError) {
+          statusEl.style.color = '#ef4444';
         }
-      ];
-      localStorage.setItem('demo_radios', JSON.stringify(radios));
+      }
+    }
+    
+    // Hide splash screen after loading
+    function hideSplash() {
+      setTimeout(() => {
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+          splash.style.opacity = '0';
+          setTimeout(() => splash.remove(), 500);
+        }
+      }, 500);
     }
     
     function showToast(icon, title) {
@@ -699,44 +576,102 @@
       });
     }
     
+    function updateSyncStatus(online, message = 'Synced') {
+      const statusEl = document.getElementById('syncStatus');
+      if (statusEl) {
+        statusEl.className = `sync-status ${online ? '' : 'offline'}`;
+        statusEl.innerHTML = online ? `<i class="fas fa-cloud-upload-alt"></i> ${message}` : `<i class="fas fa-exclamation-triangle"></i> Offline`;
+      }
+    }
+    
+    // Setup Realtime Subscription
+    function setupRealtimeSubscription() {
+      if (realtimeChannel) {
+        realtimeChannel.unsubscribe();
+      }
+      
+      if (!currentUser) return;
+      
+      realtimeChannel = supabase
+        .channel('radios-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'radios',
+          filter: `createdBy=eq.${currentUser.id}`
+        }, () => {
+          console.log('🔄 Realtime update received');
+          loadRadios();
+        })
+        .subscribe((status) => {
+          console.log('📡 Realtime status:', status);
+          updateSyncStatus(status === 'SUBSCRIBED', status === 'SUBSCRIBED' ? 'Live' : 'Connecting...');
+        });
+    }
+    
+    // Load radios from Supabase
+    async function loadRadios() {
+      if (!currentUser) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('radios')
+          .select('*')
+          .eq('createdBy', currentUser.id)
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        radios = data || [];
+        renderRadios();
+        updateSyncStatus(true);
+        
+      } catch (error) {
+        console.error('Error loading radios:', error);
+        updateSyncStatus(false, error.message);
+        showToast('error', 'Failed to load stations');
+      }
+    }
+    
     function renderRadios() {
       const radioGrid = document.getElementById('radioGrid');
       let filteredRadios = [...radios];
       
       if (currentFilter === 'favorites') {
-        filteredRadios = radios.filter(r => r.favorite);
-      } else if (currentFilter === 'recent') {
-        const recent = JSON.parse(localStorage.getItem('recentlyPlayed') || '[]');
-        filteredRadios = recent.map(id => radios.find(r => r.id === id)).filter(Boolean);
+        filteredRadios = radios.filter(r => r.favorite === true);
+      } else if (currentFilter === 'recent' && currentUser) {
+        const recent = JSON.parse(localStorage.getItem(`recent_${currentUser.id}`) || '[]');
+        filteredRadios = recent.map(id => radios.find(r => r.id == id)).filter(Boolean);
       }
       
       if (filteredRadios.length === 0) {
         radioGrid.innerHTML = `
-          <div class="glass-card" style="padding: 40px; text-align: center; grid-column: 1/-1;">
-            <i class="fas fa-radio" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
-            <h3>لا توجد محطات</h3>
-            <p style="margin-top: 10px;">اضغط على "إضافة محطة" لإضافة محطتك الأولى</p>
+          <div class="empty-state">
+            <i class="fas fa-radio" style="font-size: 48px; margin-bottom: 16px;"></i>
+            <h3>No stations found</h3>
+            <p>Click "Add Station" to add your first radio station</p>
           </div>
         `;
         return;
       }
       
-      radioGrid.innerHTML = filteredRadios.map((radio, idx) => `
+      radioGrid.innerHTML = filteredRadios.map(radio => `
         <div class="radio-card glass-card">
-          <img src="${radio.imageUrl}" alt="${radio.name}" onerror="this.src='https://via.placeholder.com/300x200?text=Radio'">
-          <h3>${radio.name}</h3>
-          <p><i class="fas fa-tag"></i> ${radio.category}</p>
+          <img src="${radio.imageUrl || 'https://placehold.co/400x300/1e293b/22c55e?text=Radio'}" 
+               onerror="this.src='https://placehold.co/400x300/1e293b/22c55e?text=Radio'">
+          <h3>${escapeHtml(radio.name)}</h3>
+          <p><i class="fas fa-tag"></i> ${escapeHtml(radio.category || 'General')}</p>
           <div class="card-actions">
-            <button class="play-btn" onclick="playRadio('${radio.id}')">
-              <i class="fas fa-play"></i> تشغيل
+            <button class="play-btn" onclick="playRadio(${radio.id})">
+              <i class="fas fa-play"></i> Play
             </button>
-            <button class="favorite-btn" onclick="toggleFavorite('${radio.id}')">
-              <i class="fas fa-heart"></i> ${radio.favorite ? 'مفضلة' : 'مفضلة'}
+            <button class="favorite-btn ${radio.favorite ? 'active' : ''}" onclick="toggleFavorite(${radio.id})">
+              <i class="fas fa-heart"></i>
             </button>
-            <button class="edit-btn" onclick="editRadio('${radio.id}')">
+            <button class="edit-btn" onclick="editRadio(${radio.id})">
               <i class="fas fa-edit"></i>
             </button>
-            <button class="delete-btn" onclick="deleteRadio('${radio.id}')">
+            <button class="delete-btn" onclick="deleteRadio(${radio.id})">
               <i class="fas fa-trash"></i>
             </button>
           </div>
@@ -744,249 +679,343 @@
       `).join('');
     }
     
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    // Upload image to Supabase Storage
+    async function uploadImage(file) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `public/${fileName}`;
+      
+      const { error } = await supabase.storage
+        .from('radio-images')
+        .upload(filePath, file);
+      
+      if (error) throw error;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('radio-images')
+        .getPublicUrl(filePath);
+      
+      return publicUrl;
+    }
+    
+    // CRUD Operations
     window.playRadio = function(id) {
-      const station = radios.find(r => r.id === id);
+      const station = radios.find(r => r.id == id);
       if (!station) return;
       
-      currentIndex = radios.findIndex(r => r.id === id);
+      currentPlayingId = id;
       audio.src = station.streamUrl;
-      audio.play().catch(e => showToast('error', 'لا يمكن تشغيل هذا الرابط'));
+      audio.play().catch(() => showToast('error', 'Cannot play this stream'));
       
       document.getElementById('miniPlayer').classList.remove('hidden');
       document.getElementById('playerTitle').innerText = station.name;
-      document.getElementById('playerImage').src = station.imageUrl;
-      document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-pause"></i>';
+      document.getElementById('playerImage').src = station.imageUrl || 'https://placehold.co/400x300/1e293b/22c55e?text=Radio';
+      document.getElementById('playPauseBtn').innerHTML = '⏸';
       
-      // Save to recently played
-      let recent = JSON.parse(localStorage.getItem('recentlyPlayed') || '[]');
-      recent = [id, ...recent.filter(i => i !== id)].slice(0, 10);
-      localStorage.setItem('recentlyPlayed', JSON.stringify(recent));
+      if (currentUser) {
+        let recent = JSON.parse(localStorage.getItem(`recent_${currentUser.id}`) || '[]');
+        recent = [id, ...recent.filter(i => i != id)].slice(0, 10);
+        localStorage.setItem(`recent_${currentUser.id}`, JSON.stringify(recent));
+        if (currentFilter === 'recent') renderRadios();
+      }
       
-      showToast('success', `تشغيل ${station.name}`);
+      showToast('success', `Playing ${station.name}`);
     };
     
-    window.toggleFavorite = function(id) {
-      const index = radios.findIndex(r => r.id === id);
-      if (index !== -1) {
-        radios[index].favorite = !radios[index].favorite;
-        localStorage.setItem('demo_radios', JSON.stringify(radios));
-        renderRadios();
-        showToast('success', radios[index].favorite ? 'تمت الإضافة إلى المفضلة' : 'تمت الإزالة من المفضلة');
+    window.toggleFavorite = async function(id) {
+      const station = radios.find(r => r.id == id);
+      if (!station) return;
+      
+      const { error } = await supabase
+        .from('radios')
+        .update({ favorite: !station.favorite })
+        .eq('id', id);
+      
+      if (error) {
+        showToast('error', 'Failed to update favorite');
+      } else {
+        showToast('success', station.favorite ? 'Removed from favorites' : 'Added to favorites');
       }
     };
     
-    window.deleteRadio = function(id) {
-      Swal.fire({
-        title: 'هل أنت متأكد؟',
-        text: 'لن تتمكن من استعادة هذه المحطة!',
+    window.deleteRadio = async function(id) {
+      const result = await Swal.fire({
+        title: 'Delete station?',
+        text: 'This action cannot be undone!',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#ef4444',
         cancelButtonColor: '#22c55e',
-        confirmButtonText: 'نعم، احذف',
-        cancelButtonText: 'إلغاء'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          radios = radios.filter(r => r.id !== id);
-          localStorage.setItem('demo_radios', JSON.stringify(radios));
-          renderRadios();
-          showToast('success', 'تم حذف المحطة بنجاح');
-        }
+        confirmButtonText: 'Yes, delete',
+        cancelButtonText: 'Cancel'
       });
+      
+      if (result.isConfirmed) {
+        const { error } = await supabase
+          .from('radios')
+          .delete()
+          .eq('id', id);
+        
+        if (error) {
+          showToast('error', 'Failed to delete');
+        } else {
+          showToast('success', 'Station deleted');
+        }
+      }
     };
     
     window.editRadio = async function(id) {
-      const radio = radios.find(r => r.id === id);
-      const { value: formValues } = await Swal.fire({
-        title: 'تعديل المحطة',
+      const station = radios.find(r => r.id == id);
+      
+      const { value: values } = await Swal.fire({
+        title: 'Edit Station',
         html: `
-          <input id="swal-name" class="swal2-input" placeholder="اسم المحطة" value="${radio.name}">
-          <input id="swal-url" class="swal2-input" placeholder="رابط البث" value="${radio.streamUrl}">
-          <input id="swal-category" class="swal2-input" placeholder="التصنيف" value="${radio.category}">
+          <input id="edit-name" class="swal2-input" placeholder="Station name" value="${station.name}">
+          <input id="edit-url" class="swal2-input" placeholder="Stream URL" value="${station.streamUrl}">
+          <input id="edit-cat" class="swal2-input" placeholder="Category" value="${station.category || ''}">
         `,
         focusConfirm: false,
-        preConfirm: () => {
-          return {
-            name: document.getElementById('swal-name').value,
-            streamUrl: document.getElementById('swal-url').value,
-            category: document.getElementById('swal-category').value
-          }
-        }
+        preConfirm: () => ({
+          name: document.getElementById('edit-name').value,
+          url: document.getElementById('edit-url').value,
+          category: document.getElementById('edit-cat').value
+        })
       });
       
-      if (formValues && formValues.name && formValues.streamUrl) {
-        const index = radios.findIndex(r => r.id === id);
-        radios[index].name = formValues.name;
-        radios[index].streamUrl = formValues.streamUrl;
-        radios[index].category = formValues.category || 'عام';
-        localStorage.setItem('demo_radios', JSON.stringify(radios));
-        renderRadios();
-        showToast('success', 'تم تحديث المحطة');
+      if (values && values.name && values.url) {
+        const { error } = await supabase
+          .from('radios')
+          .update({
+            name: values.name,
+            streamUrl: values.url,
+            category: values.category || 'General'
+          })
+          .eq('id', id);
+        
+        if (error) {
+          showToast('error', 'Failed to update');
+        } else {
+          showToast('success', 'Station updated');
+        }
       }
     };
     
-    // Event Listeners
-    document.getElementById('playPauseBtn')?.addEventListener('click', () => {
+    // Authentication
+    document.getElementById('registerBtn').onclick = async () => {
+      const email = document.getElementById('registerEmail').value;
+      const password = document.getElementById('registerPassword').value;
+      const confirm = document.getElementById('registerConfirmPassword').value;
+      const name = document.getElementById('registerName').value;
+      
+      if (!email || !password) {
+        return showToast('error', 'Please fill all fields');
+      }
+      if (password !== confirm) {
+        return showToast('error', 'Passwords do not match');
+      }
+      if (password.length < 6) {
+        return showToast('error', 'Password must be at least 6 characters');
+      }
+      
+      updateLoadingStatus('Creating account...');
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { name } }
+      });
+      
+      if (error) {
+        updateLoadingStatus('Error: ' + error.message, true);
+        showToast('error', error.message);
+      } else {
+        updateLoadingStatus('Verification email sent! Check your inbox.');
+        showToast('success', 'Check your email to verify your account');
+        document.getElementById('registerCard').classList.add('hidden');
+        document.getElementById('loginCard').classList.remove('hidden');
+      }
+    };
+    
+    document.getElementById('loginBtn').onclick = async () => {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      
+      if (!email || !password) {
+        return showToast('error', 'Please enter email and password');
+      }
+      
+      updateLoadingStatus('Signing in...');
+      
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (error) {
+        updateLoadingStatus('Login failed: ' + error.message, true);
+        showToast('error', 'Invalid email or password');
+      }
+    };
+    
+    // Auth UI Toggle
+    document.getElementById('showRegister').onclick = () => {
+      document.getElementById('loginCard').classList.add('hidden');
+      document.getElementById('registerCard').classList.remove('hidden');
+    };
+    
+    document.getElementById('showLogin').onclick = () => {
+      document.getElementById('registerCard').classList.add('hidden');
+      document.getElementById('loginCard').classList.remove('hidden');
+    };
+    
+    document.getElementById('logoutBtn').onclick = async () => {
+      await supabase.auth.signOut();
+    };
+    
+    // Add Station Modal
+    document.getElementById('addRadioBtn').onclick = () => {
+      document.getElementById('radioModal').classList.remove('hidden');
+    };
+    
+    document.getElementById('closeModalBtn').onclick = () => {
+      document.getElementById('radioModal').classList.add('hidden');
+      document.getElementById('radioName').value = '';
+      document.getElementById('radioUrl').value = '';
+      document.getElementById('radioCategory').value = '';
+      document.getElementById('radioImage').value = '';
+    };
+    
+    document.getElementById('saveRadioBtn').onclick = async () => {
+      const name = document.getElementById('radioName').value;
+      const streamUrl = document.getElementById('radioUrl').value;
+      const category = document.getElementById('radioCategory').value || 'General';
+      const imageFile = document.getElementById('radioImage').files[0];
+      
+      if (!name || !streamUrl) {
+        return showToast('warning', 'Please enter station name and stream URL');
+      }
+      
+      const saveBtn = document.getElementById('saveRadioBtn');
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+      
+      let imageUrl = null;
+      if (imageFile) {
+        try {
+          imageUrl = await uploadImage(imageFile);
+        } catch (error) {
+          showToast('error', 'Failed to upload image');
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = '💾 Save Station';
+          return;
+        }
+      }
+      
+      const { error } = await supabase.from('radios').insert([{
+        name,
+        streamUrl,
+        category,
+        imageUrl: imageUrl || null,
+        favorite: false,
+        createdBy: currentUser.id
+      }]);
+      
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '💾 Save Station';
+      
+      if (error) {
+        showToast('error', 'Failed to add station: ' + error.message);
+      } else {
+        showToast('success', 'Station added successfully');
+        document.getElementById('radioModal').classList.add('hidden');
+        document.getElementById('radioName').value = '';
+        document.getElementById('radioUrl').value = '';
+        document.getElementById('radioCategory').value = '';
+        document.getElementById('radioImage').value = '';
+      }
+    };
+    
+    // Player Controls
+    document.getElementById('playPauseBtn').onclick = () => {
       if (audio.paused) {
         audio.play();
-        document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-pause"></i>';
+        document.getElementById('playPauseBtn').innerHTML = '⏸';
       } else {
         audio.pause();
-        document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-play"></i>';
+        document.getElementById('playPauseBtn').innerHTML = '▶';
       }
-    });
+    };
     
-    document.getElementById('prevBtn')?.addEventListener('click', () => {
-      if (radios.length > 0) {
-        currentIndex = (currentIndex - 1 + radios.length) % radios.length;
-        playRadio(radios[currentIndex].id);
+    document.getElementById('prevBtn').onclick = () => {
+      if (radios.length && currentPlayingId) {
+        const idx = radios.findIndex(r => r.id == currentPlayingId);
+        const prev = (idx - 1 + radios.length) % radios.length;
+        playRadio(radios[prev].id);
       }
-    });
+    };
     
-    document.getElementById('nextBtn')?.addEventListener('click', () => {
-      if (radios.length > 0) {
-        currentIndex = (currentIndex + 1) % radios.length;
-        playRadio(radios[currentIndex].id);
+    document.getElementById('nextBtn').onclick = () => {
+      if (radios.length && currentPlayingId) {
+        const idx = radios.findIndex(r => r.id == currentPlayingId);
+        const next = (idx + 1) % radios.length;
+        playRadio(radios[next].id);
       }
-    });
+    };
     
-    document.getElementById('volumeSlider')?.addEventListener('input', (e) => {
+    document.getElementById('volumeSlider').oninput = (e) => {
       audio.volume = e.target.value;
-    });
+    };
     
-    document.getElementById('searchInput')?.addEventListener('input', (e) => {
+    // Search
+    document.getElementById('searchInput').oninput = (e) => {
       const value = e.target.value.toLowerCase();
       const cards = document.querySelectorAll('.radio-card');
       cards.forEach(card => {
         const title = card.querySelector('h3')?.innerText.toLowerCase() || '';
         card.style.display = title.includes(value) ? 'block' : 'none';
       });
-    });
+    };
     
-    document.getElementById('addRadioBtn')?.addEventListener('click', () => {
-      document.getElementById('radioModal').classList.remove('hidden');
-    });
-    
-    document.getElementById('closeModalBtn')?.addEventListener('click', () => {
-      document.getElementById('radioModal').classList.add('hidden');
-      document.getElementById('radioName').value = '';
-      document.getElementById('radioUrl').value = '';
-      document.getElementById('radioCategory').value = '';
-      document.getElementById('radioImage').value = '';
-    });
-    
-    document.getElementById('saveRadioBtn')?.addEventListener('click', () => {
-      const name = document.getElementById('radioName').value;
-      const streamUrl = document.getElementById('radioUrl').value;
-      const category = document.getElementById('radioCategory').value || 'عام';
-      const imageFile = document.getElementById('radioImage').files[0];
-      
-      if (!name || !streamUrl) {
-        return showToast('warning', 'يرجى إدخال اسم المحطة ورابط البث');
-      }
-      
-      const newRadio = {
-        id: Date.now().toString(),
-        name: name,
-        streamUrl: streamUrl,
-        category: category,
-        imageUrl: imageFile ? URL.createObjectURL(imageFile) : 'https://via.placeholder.com/300x200?text=Radio',
-        favorite: false
-      };
-      
-      radios.push(newRadio);
-      localStorage.setItem('demo_radios', JSON.stringify(radios));
-      renderRadios();
-      document.getElementById('radioModal').classList.add('hidden');
-      showToast('success', 'تمت إضافة المحطة بنجاح');
-      
-      // Clear form
-      document.getElementById('radioName').value = '';
-      document.getElementById('radioUrl').value = '';
-      document.getElementById('radioCategory').value = '';
-      document.getElementById('radioImage').value = '';
-    });
-    
-    // Menu filter
+    // Menu Filter
     document.querySelectorAll('.menu-item').forEach(item => {
-      item.addEventListener('click', () => {
+      item.onclick = () => {
         document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
         item.classList.add('active');
-        currentFilter = item.getAttribute('data-filter');
+        currentFilter = item.dataset.filter;
         renderRadios();
-      });
+        
+        const titles = {
+          all: '📻 All Radio Stations',
+          favorites: '❤️ Favorite Stations',
+          recent: '🕒 Recently Played'
+        };
+        document.getElementById('pageTitle').innerText = titles[currentFilter];
+      };
     });
     
-    // Auth UI (Demo - just show app after login click)
-    document.getElementById('showRegister')?.addEventListener('click', () => {
-      document.getElementById('loginCard').classList.add('hidden');
-      document.getElementById('registerCard').classList.remove('hidden');
-    });
-    
-    document.getElementById('showLogin')?.addEventListener('click', () => {
-      document.getElementById('registerCard').classList.add('hidden');
-      document.getElementById('loginCard').classList.remove('hidden');
-    });
-    
-    document.getElementById('loginBtn')?.addEventListener('click', () => {
-      const email = document.getElementById('loginEmail').value;
-      const password = document.getElementById('loginPassword').value;
+    // Auth State Listener
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔐 Auth event:', event);
       
-      if (!email || !password) {
-        return showToast('error', 'يرجى إدخال البريد الإلكتروني وكلمة المرور');
-      }
-      
-      // Demo login - just show the app
-      document.getElementById('authContainer').classList.add('hidden');
-      document.getElementById('app').classList.remove('hidden');
-      renderRadios();
-      showToast('success', 'مرحباً بك في تطبيق الراديو!');
-    });
-    
-    document.getElementById('googleLoginBtn')?.addEventListener('click', () => {
-      document.getElementById('authContainer').classList.add('hidden');
-      document.getElementById('app').classList.remove('hidden');
-      renderRadios();
-      showToast('success', 'تم تسجيل الدخول عبر Google (وضع التجربة)');
-    });
-    
-    document.getElementById('registerBtn')?.addEventListener('click', () => {
-      const name = document.getElementById('registerName').value;
-      const email = document.getElementById('registerEmail').value;
-      const password = document.getElementById('registerPassword').value;
-      const confirm = document.getElementById('registerConfirmPassword').value;
-      
-      if (!name || !email || !password) {
-        return showToast('error', 'يرجى تعبئة جميع الحقول');
-      }
-      
-      if (password !== confirm) {
-        return showToast('error', 'كلمتا المرور غير متطابقتين');
-      }
-      
-      showToast('success', 'تم إنشاء الحساب بنجاح! يرجى تسجيل الدخول');
-      document.getElementById('registerCard').classList.add('hidden');
-      document.getElementById('loginCard').classList.remove('hidden');
-    });
-    
-    document.getElementById('forgotPasswordBtn')?.addEventListener('click', () => {
-      Swal.fire({
-        title: 'استعادة كلمة المرور',
-        text: 'سيتم إرسال رابط إعادة التعيين إلى بريدك الإلكتروني',
-        icon: 'info',
-        confirmButtonText: 'حسناً'
-      });
-    });
-    
-    document.getElementById('logoutBtn')?.addEventListener('click', () => {
-      document.getElementById('app').classList.add('hidden');
-      document.getElementById('authContainer').classList.remove('hidden');
-      audio.pause();
-      showToast('success', 'تم تسجيل الخروج');
-    });
-    
-    // Initial render
-    renderRadios();
-  </script>
-</body>
-</html>
+      if (event === 'SIGNED_IN' && session?.user) {
+        currentUser = session.user;
+        updateLoadingStatus('Connected! Loading stations...');
+        
+        document.getElementById('authContainer').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+        hideSplash();
+        
+        await loadRadios();
+        setupRealtimeSubscription();
+        showToast('success', `Welcome ${currentUser.email}`);
+        
+      } else if (event === 'SIGNED_OUT') {
+        currentUser = null;
+        radios = [];
+        
+        if (realtimeChannel) {
+          realtimeChannel.unsubscribe();
+          realtime
