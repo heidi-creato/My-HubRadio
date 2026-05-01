@@ -7,7 +7,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
     body { background: linear-gradient(135deg, #0f172a, #020617); color: white; min-height: 100vh; }
@@ -95,7 +94,7 @@
 
   <div id="splash-screen">
     <div class="loader"></div>
-    <div id="loading-status">جاري الاتصال بـ Supabase...</div>
+    <div id="loading-status">جاري تحميل التطبيق...</div>
   </div>
 
   <div class="auth-container hidden" id="authContainer">
@@ -173,15 +172,17 @@
     </div>
   </div>
 
-  <script>
+  <script type="module">
     // 🔑 بيانات Supabase - ضع بياناتك الصحيحة هنا
     const SUPABASE_URL = 'https://ujplidlkvilhqlocyutn.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_0F09fDqtoW7i3mqqT8LtOg_nAj1XdnP';
     
+    // استيراد Supabase كـ module
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    
     console.log('🚀 بدء الاتصال بـ Supabase...');
     
-    // ✅ تغيير مهم: استخدام متغير مختلف لتجنب تضارب الأسماء
-    const supabaseClient = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
     let currentUser = null;
     let radios = [];
@@ -228,7 +229,7 @@
       try {
         updateLoadingStatus('جاري تحميل المحطات...');
         
-        const { data, error } = await supabaseClient
+        const { data, error } = await supabase
           .from('radios')
           .select('*')
           .order('created_at', { ascending: false });
@@ -275,16 +276,16 @@
           <h3>${escapeHtml(radio.name)}</h3>
           <p><i class="fas fa-tag"></i> ${escapeHtml(radio.category || 'عام')}</p>
           <div class="card-actions">
-            <button class="play-btn" onclick="playRadio('${radio.id}')">
+            <button class="play-btn" onclick="window.playRadio('${radio.id}')">
               <i class="fas fa-play"></i> تشغيل
             </button>
-            <button class="favorite-btn ${radio.favorite ? 'active' : ''}" onclick="toggleFavorite('${radio.id}')">
+            <button class="favorite-btn ${radio.favorite ? 'active' : ''}" onclick="window.toggleFavorite('${radio.id}')">
               <i class="fas fa-heart"></i>
             </button>
-            <button class="edit-btn" onclick="editRadio('${radio.id}')">
+            <button class="edit-btn" onclick="window.editRadio('${radio.id}')">
               <i class="fas fa-edit"></i>
             </button>
-            <button class="delete-btn" onclick="deleteRadio('${radio.id}')">
+            <button class="delete-btn" onclick="window.deleteRadio('${radio.id}')">
               <i class="fas fa-trash"></i>
             </button>
           </div>
@@ -325,7 +326,7 @@
       const station = radios.find(r => r.id == id);
       if (!station) return;
       
-      const { error } = await supabaseClient
+      const { error } = await supabase
         .from('radios')
         .update({ favorite: !station.favorite })
         .eq('id', id);
@@ -334,6 +335,7 @@
         showToast('error', 'فشل التحديث');
       } else {
         showToast('success', station.favorite ? 'تمت الإزالة من المفضلة' : 'تمت الإضافة إلى المفضلة');
+        await loadRadios();
       }
     };
     
@@ -350,11 +352,12 @@
       });
       
       if (result.isConfirmed) {
-        const { error } = await supabaseClient.from('radios').delete().eq('id', id);
+        const { error } = await supabase.from('radios').delete().eq('id', id);
         if (error) {
           showToast('error', 'فشل الحذف');
         } else {
           showToast('success', 'تم حذف المحطة');
+          await loadRadios();
         }
       }
     };
@@ -365,9 +368,9 @@
       const { value: values } = await Swal.fire({
         title: 'تعديل المحطة',
         html: `
-          <input id="edit-name" class="swal2-input" placeholder="اسم المحطة" value="${radio.name}">
-          <input id="edit-url" class="swal2-input" placeholder="رابط البث" value="${radio.streamUrl}">
-          <input id="edit-cat" class="swal2-input" placeholder="التصنيف" value="${radio.category || ''}">
+          <input id="edit-name" class="swal2-input" placeholder="اسم المحطة" value="${radio.name.replace(/"/g, '&quot;')}">
+          <input id="edit-url" class="swal2-input" placeholder="رابط البث" value="${radio.streamUrl.replace(/"/g, '&quot;')}">
+          <input id="edit-cat" class="swal2-input" placeholder="التصنيف" value="${(radio.category || '').replace(/"/g, '&quot;')}">
         `,
         focusConfirm: false,
         preConfirm: () => ({
@@ -378,7 +381,7 @@
       });
       
       if (values && values.name && values.url) {
-        const { error } = await supabaseClient
+        const { error } = await supabase
           .from('radios')
           .update({
             name: values.name,
@@ -391,6 +394,7 @@
           showToast('error', 'فشل التحديث');
         } else {
           showToast('success', 'تم تحديث المحطة');
+          await loadRadios();
         }
       }
     };
@@ -414,7 +418,7 @@
       
       updateLoadingStatus('جاري إنشاء الحساب...');
       
-      const { error } = await supabaseClient.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: { data: { name: name } }
@@ -441,7 +445,7 @@
       
       updateLoadingStatus('جاري تسجيل الدخول...');
       
-      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
         updateLoadingStatus('خطأ: ' + error.message, true);
@@ -461,7 +465,7 @@
     };
     
     document.getElementById('logoutBtn').onclick = async () => {
-      await supabaseClient.auth.signOut();
+      await supabase.auth.signOut();
     };
     
     // Add Station Modal
@@ -481,7 +485,6 @@
       const name = document.getElementById('radioName').value;
       const streamUrl = document.getElementById('radioUrl').value;
       const category = document.getElementById('radioCategory').value || 'عام';
-      const imageFile = document.getElementById('radioImage').files[0];
       
       if (!name || !streamUrl) {
         return showToast('warning', 'يرجى إدخال اسم المحطة ورابط البث');
@@ -491,37 +494,12 @@
       saveBtn.disabled = true;
       saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
       
-      let imageUrl = null;
-      if (imageFile) {
-        try {
-          const fileExt = imageFile.name.split('.').pop();
-          const fileName = `${Date.now()}.${fileExt}`;
-          const { error: uploadError } = await supabaseClient.storage
-            .from('radio-images')
-            .upload(`public/${fileName}`, imageFile);
-          
-          if (uploadError) throw uploadError;
-          
-          const { data: { publicUrl } } = supabaseClient.storage
-            .from('radio-images')
-            .getPublicUrl(`public/${fileName}`);
-          
-          imageUrl = publicUrl;
-        } catch (e) {
-          console.error('Upload error:', e);
-          showToast('error', 'خطأ في رفع الصورة');
-          saveBtn.disabled = false;
-          saveBtn.innerHTML = '💾 حفظ';
-          return;
-        }
-      }
-      
       try {
-        const { error } = await supabaseClient.from('radios').insert([{
+        const { error } = await supabase.from('radios').insert([{
           name: name,
           streamUrl: streamUrl,
           category: category,
-          imageUrl: imageUrl,
+          imageUrl: null,
           favorite: false
         }]);
         
@@ -559,7 +537,7 @@
       if (radios.length && currentPlayingId) {
         const idx = radios.findIndex(r => r.id == currentPlayingId);
         const prev = (idx - 1 + radios.length) % radios.length;
-        playRadio(radios[prev].id);
+        window.playRadio(radios[prev].id);
       }
     };
     
@@ -567,7 +545,7 @@
       if (radios.length && currentPlayingId) {
         const idx = radios.findIndex(r => r.id == currentPlayingId);
         const next = (idx + 1) % radios.length;
-        playRadio(radios[next].id);
+        window.playRadio(radios[next].id);
       }
     };
     
@@ -603,7 +581,7 @@
     });
     
     // Auth State Listener
-    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔐 Auth event:', event);
       
       if (event === 'SIGNED_IN' && session?.user) {
@@ -628,8 +606,24 @@
         audio.src = '';
         
         updateLoadingStatus('تم تسجيل الخروج');
+        hideSplash();
       }
     });
+    
+    // التحقق من حالة المستخدم عند بدء التحميل
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      currentUser = user;
+      document.getElementById('authContainer').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      hideSplash();
+      await loadRadios();
+      showToast('success', `مرحباً ${user.email}`);
+    } else {
+      document.getElementById('authContainer').classList.remove('hidden');
+      document.getElementById('app').classList.add('hidden');
+      hideSplash();
+    }
   </script>
 </body>
 </html>
