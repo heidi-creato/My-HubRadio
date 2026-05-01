@@ -7,6 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
     body { background: linear-gradient(135deg, #0f172a, #020617); color: white; min-height: 100vh; }
@@ -174,14 +175,13 @@
     </div>
   </div>
 
-  <script type="module">
+  <script>
     // 🔑 بيانات Supabase - ضع بياناتك الصحيحة هنا
     const SUPABASE_URL = 'https://ujplidlkvilhqlocyutn.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_0F09fDqtoW7i3mqqT8LtOg_nAj1XdnP';
     
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-    
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // تهيئة Supabase
+    const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
     let currentUser = null;
     let radios = [];
@@ -190,64 +190,61 @@
     const audio = new Audio();
     audio.volume = 0.8;
     
-    function updateLoadingStatus(message, isError = false) {
+    // دوال مساعدة
+    function updateLoadingStatus(msg, isError = false) {
       const el = document.getElementById('loading-status');
-      if (el) {
-        el.innerHTML = message;
-        if (isError) el.style.color = '#ef4444';
-        else el.style.color = 'rgba(255,255,255,0.7)';
+      if(el) {
+        el.innerHTML = msg;
+        el.style.color = isError ? '#ef4444' : 'rgba(255,255,255,0.7)';
       }
     }
     
     function hideSplash() {
-      setTimeout(() => {
-        const splash = document.getElementById('splash-screen');
-        if (splash) {
-          splash.style.opacity = '0';
-          setTimeout(() => splash.remove(), 500);
-        }
-      }, 500);
+      const splash = document.getElementById('splash-screen');
+      if(splash) {
+        splash.style.opacity = '0';
+        setTimeout(() => splash.remove(), 500);
+      }
     }
     
     function showToast(icon, title) {
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: icon,
-        title: title,
-        showConfirmButton: false,
-        timer: 3000,
-        background: '#1e293b',
-        color: '#fff'
+      Swal.fire({ toast: true, position: 'top-end', icon, title, showConfirmButton: false, timer: 3000, background: '#1e293b', color: '#fff' });
+    }
+    
+    function escapeHtml(str) {
+      if(!str) return '';
+      return str.replace(/[&<>]/g, function(m) {
+        if(m === '&') return '&amp;';
+        if(m === '<') return '&lt;';
+        if(m === '>') return '&gt;';
+        return m;
       });
     }
     
+    // تحميل المحطات
     async function loadRadios() {
-      if (!currentUser) return;
+      if(!currentUser) return;
       try {
-        const { data, error } = await supabase
-          .from('radios')
-          .select('*')
-          .order('created_at', { ascending: false });
-        if (error) throw error;
+        const { data, error } = await supabase.from('radios').select('*').order('created_at', { ascending: false });
+        if(error) throw error;
         radios = data || [];
         renderRadios();
-      } catch (error) {
-        console.error(error);
-        showToast('error', 'خطأ في تحميل المحطات');
+      } catch(e) {
+        console.error(e);
+        showToast('error', 'فشل تحميل المحطات');
       }
     }
     
     function renderRadios() {
       const grid = document.getElementById('radioGrid');
       let filtered = [...radios];
-      if (currentFilter === 'favorites') filtered = radios.filter(r => r.favorite === true);
-      else if (currentFilter === 'recent' && currentUser) {
+      if(currentFilter === 'favorites') filtered = radios.filter(r => r.favorite === true);
+      else if(currentFilter === 'recent' && currentUser) {
         const recent = JSON.parse(localStorage.getItem(`recent_${currentUser.id}`) || '[]');
         filtered = recent.map(id => radios.find(r => r.id == id)).filter(Boolean);
       }
-      if (!filtered.length) {
-        grid.innerHTML = '<div class="empty-state"><i class="fas fa-radio" style="font-size:48px"></i><h3>لا توجد محطات</h3><p>اضغط على "إضافة محطة" لبدء الاستماع</p></div>';
+      if(filtered.length === 0) {
+        grid.innerHTML = '<div class="empty-state"><i class="fas fa-radio" style="font-size:48px"></i><h3>لا توجد محطات</h3><p>أضف محطتك الأولى</p></div>';
         return;
       }
       grid.innerHTML = filtered.map(radio => `
@@ -256,47 +253,38 @@
           <h3>${escapeHtml(radio.name)}</h3>
           <p>${escapeHtml(radio.category || 'عام')}</p>
           <div class="card-actions">
-            <button class="play-btn" onclick="window.playRadio('${radio.id}')">▶ تشغيل</button>
-            <button class="favorite-btn ${radio.favorite ? 'active' : ''}" onclick="window.toggleFavorite('${radio.id}')">❤️</button>
-            <button class="edit-btn" onclick="window.editRadio('${radio.id}')">✏️</button>
-            <button class="delete-btn" onclick="window.deleteRadio('${radio.id}')">🗑️</button>
+            <button class="play-btn" onclick="playRadio('${radio.id}')">▶ تشغيل</button>
+            <button class="favorite-btn ${radio.favorite ? 'active' : ''}" onclick="toggleFavorite('${radio.id}')">❤️</button>
+            <button class="edit-btn" onclick="editRadio('${radio.id}')">✏️</button>
+            <button class="delete-btn" onclick="deleteRadio('${radio.id}')">🗑️</button>
           </div>
         </div>
       `).join('');
     }
     
-    function escapeHtml(str) {
-      if (!str) return '';
-      return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-      });
-    }
-    
+    // دوال العمليات
     window.playRadio = function(id) {
       const station = radios.find(r => r.id == id);
-      if (!station) return;
+      if(!station) return;
       currentPlayingId = id;
       audio.src = station.streamUrl;
-      audio.play().catch(() => showToast('error', 'لا يمكن تشغيل البث'));
+      audio.play().catch(e => showToast('error', 'لا يمكن تشغيل البث'));
       document.getElementById('miniPlayer').classList.remove('hidden');
       document.getElementById('playerTitle').innerText = station.name;
       document.getElementById('playerImage').src = station.imageUrl || 'https://placehold.co/400x300/1e293b/22c55e?text=Radio';
       document.getElementById('playPauseBtn').innerHTML = '⏸';
-      if (currentUser) {
+      if(currentUser) {
         let recent = JSON.parse(localStorage.getItem(`recent_${currentUser.id}`) || '[]');
         recent = [id, ...recent.filter(i => i != id)].slice(0, 10);
         localStorage.setItem(`recent_${currentUser.id}`, JSON.stringify(recent));
-        if (currentFilter === 'recent') renderRadios();
+        if(currentFilter === 'recent') renderRadios();
       }
       showToast('success', `تشغيل ${station.name}`);
     };
     
     window.toggleFavorite = async function(id) {
       const station = radios.find(r => r.id == id);
-      if (!station) return;
+      if(!station) return;
       await supabase.from('radios').update({ favorite: !station.favorite }).eq('id', id);
       showToast('success', station.favorite ? 'أزيلت من المفضلة' : 'أضيفت إلى المفضلة');
       await loadRadios();
@@ -304,7 +292,7 @@
     
     window.deleteRadio = async function(id) {
       const result = await Swal.fire({ title: 'حذف المحطة؟', text: 'لا يمكن التراجع', icon: 'warning', showCancelButton: true, confirmButtonText: 'نعم', cancelButtonText: 'إلغاء' });
-      if (result.isConfirmed) {
+      if(result.isConfirmed) {
         await supabase.from('radios').delete().eq('id', id);
         showToast('success', 'تم الحذف');
         await loadRadios();
@@ -318,25 +306,25 @@
         html: `<input id="name" class="swal2-input" value="${radio.name.replace(/"/g, '&quot;')}"><input id="url" class="swal2-input" value="${radio.streamUrl.replace(/"/g, '&quot;')}"><input id="cat" class="swal2-input" value="${(radio.category || '').replace(/"/g, '&quot;')}">`,
         preConfirm: () => ({ name: document.getElementById('name').value, url: document.getElementById('url').value, category: document.getElementById('cat').value })
       });
-      if (values) {
+      if(values) {
         await supabase.from('radios').update({ name: values.name, streamUrl: values.url, category: values.category }).eq('id', id);
         showToast('success', 'تم التحديث');
         await loadRadios();
       }
     };
     
-    // Authentication event handlers
+    // المصادقة
     document.getElementById('registerBtn').onclick = async () => {
       const email = document.getElementById('registerEmail').value;
       const password = document.getElementById('registerPassword').value;
       const confirm = document.getElementById('registerConfirmPassword').value;
-      if (password !== confirm) return showToast('error', 'كلمتا المرور غير متطابقتين');
+      if(password !== confirm) return showToast('error', 'كلمتا المرور غير متطابقتين');
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: { data: { name: document.getElementById('registerName').value } }
       });
-      if (error) showToast('error', error.message);
+      if(error) showToast('error', error.message);
       else {
         showToast('success', 'تم التسجيل، راجع بريدك لتفعيل الحساب');
         document.getElementById('registerCard').classList.add('hidden');
@@ -348,13 +336,12 @@
       const email = document.getElementById('loginEmail').value;
       const password = document.getElementById('loginPassword').value;
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) showToast('error', 'بيانات غير صحيحة');
+      if(error) showToast('error', 'بيانات غير صحيحة');
     };
     
     document.getElementById('googleLoginBtn').onclick = async () => {
       const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
-      if (error) showToast('error', error.message);
-      // بعد تسجيل الدخول، سيتم إعادة التوجيه إلى الصفحة الحالية (يجب أن يكون الرابط مسجلاً في Supabase)
+      if(error) showToast('error', error.message);
     };
     
     document.getElementById('showRegister').onclick = () => {
@@ -365,8 +352,17 @@
       document.getElementById('registerCard').classList.add('hidden');
       document.getElementById('loginCard').classList.remove('hidden');
     };
+    
     document.getElementById('logoutBtn').onclick = async () => {
       await supabase.auth.signOut();
+      currentUser = null;
+      radios = [];
+      document.getElementById('app').classList.add('hidden');
+      document.getElementById('authContainer').classList.remove('hidden');
+      document.getElementById('miniPlayer').classList.add('hidden');
+      audio.pause();
+      audio.src = '';
+      showToast('success', 'تم تسجيل الخروج');
     };
     
     // إضافة محطة
@@ -374,10 +370,10 @@
     document.getElementById('closeModalBtn').onclick = () => document.getElementById('radioModal').classList.add('hidden');
     document.getElementById('saveRadioBtn').onclick = async () => {
       const name = document.getElementById('radioName').value;
-      const url = document.getElementById('radioUrl').value;
-      if (!name || !url) return showToast('warning', 'املأ الحقول');
-      const { error } = await supabase.from('radios').insert([{ name, streamUrl: url, category: document.getElementById('radioCategory').value || 'عام', imageUrl: null, favorite: false }]);
-      if (error) showToast('error', error.message);
+      const streamUrl = document.getElementById('radioUrl').value;
+      if(!name || !streamUrl) return showToast('warning', 'املأ الحقول');
+      const { error } = await supabase.from('radios').insert([{ name, streamUrl, category: document.getElementById('radioCategory').value || 'عام', imageUrl: null, favorite: false }]);
+      if(error) showToast('error', error.message);
       else {
         showToast('success', 'تمت الإضافة');
         document.getElementById('radioModal').classList.add('hidden');
@@ -389,28 +385,28 @@
       }
     };
     
-    // Player controls
+    // مشغل الصوت
     document.getElementById('playPauseBtn').onclick = () => {
-      if (audio.paused) { audio.play(); document.getElementById('playPauseBtn').innerHTML = '⏸'; }
+      if(audio.paused) { audio.play(); document.getElementById('playPauseBtn').innerHTML = '⏸'; }
       else { audio.pause(); document.getElementById('playPauseBtn').innerHTML = '▶'; }
     };
     document.getElementById('prevBtn').onclick = () => {
-      if (radios.length && currentPlayingId) {
-        const idx = radios.findIndex(r => r.id == currentPlayingId);
-        const prev = (idx - 1 + radios.length) % radios.length;
-        window.playRadio(radios[prev].id);
+      if(radios.length && currentPlayingId) {
+        let idx = radios.findIndex(r => r.id == currentPlayingId);
+        idx = (idx - 1 + radios.length) % radios.length;
+        window.playRadio(radios[idx].id);
       }
     };
     document.getElementById('nextBtn').onclick = () => {
-      if (radios.length && currentPlayingId) {
-        const idx = radios.findIndex(r => r.id == currentPlayingId);
-        const next = (idx + 1) % radios.length;
-        window.playRadio(radios[next].id);
+      if(radios.length && currentPlayingId) {
+        let idx = radios.findIndex(r => r.id == currentPlayingId);
+        idx = (idx + 1) % radios.length;
+        window.playRadio(radios[idx].id);
       }
     };
     document.getElementById('volumeSlider').oninput = (e) => audio.volume = e.target.value;
     
-    // Search
+    // بحث
     document.getElementById('searchInput').oninput = (e) => {
       const val = e.target.value.toLowerCase();
       document.querySelectorAll('.radio-card').forEach(card => {
@@ -419,29 +415,29 @@
       });
     };
     
-    // Menu filter
+    // فلتر القائمة
     document.querySelectorAll('.menu-item').forEach(item => {
       item.onclick = () => {
         document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
         item.classList.add('active');
         currentFilter = item.dataset.filter;
         renderRadios();
-        const titles = { all: '📻 جميع المحطات', favorites: '❤️ المحطات المفضلة', recent: '🕒 آخر تشغيل' };
+        const titles = { all: '📻 جميع المحطات', favorites: '❤️ المفضلة', recent: '🕒 آخر تشغيل' };
         document.getElementById('pageTitle').innerText = titles[currentFilter];
       };
     });
     
-    // Auth state change
+    // الاستماع لحالة المصادقة
     supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth event:', event);
-      if (event === 'SIGNED_IN' && session?.user) {
+      if(event === 'SIGNED_IN' && session?.user) {
         currentUser = session.user;
         document.getElementById('authContainer').classList.add('hidden');
         document.getElementById('app').classList.remove('hidden');
         hideSplash();
         await loadRadios();
         showToast('success', `مرحباً ${currentUser.email}`);
-      } else if (event === 'SIGNED_OUT') {
+      } else if(event === 'SIGNED_OUT') {
         currentUser = null;
         radios = [];
         document.getElementById('app').classList.add('hidden');
@@ -452,19 +448,21 @@
       }
     });
     
-    // Check existing session
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      currentUser = user;
-      document.getElementById('authContainer').classList.add('hidden');
-      document.getElementById('app').classList.remove('hidden');
-      hideSplash();
-      await loadRadios();
-    } else {
-      document.getElementById('authContainer').classList.remove('hidden');
-      document.getElementById('app').classList.add('hidden');
-      hideSplash();
-    }
+    // التحقق من جلسة حالية
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if(user) {
+        currentUser = user;
+        document.getElementById('authContainer').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+        hideSplash();
+        await loadRadios();
+      } else {
+        document.getElementById('authContainer').classList.remove('hidden');
+        document.getElementById('app').classList.add('hidden');
+        hideSplash();
+      }
+    })();
   </script>
 </body>
 </html>
