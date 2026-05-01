@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0f">
+<title>راديو | Radio Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0a0f; --surface:#111118; --card:#16161f; --card-hover:#1c1c27;
+  --border:rgba(255,255,255,0.07); --border-light:rgba(255,255,255,0.12);
+  --accent:#e8a03c; --accent2:#c97b2a; --accent-glow:rgba(232,160,60,0.22); --accent-soft:rgba(232,160,60,0.08);
+  --text:#f0ede8; --text-muted:#7a7880; --text-dim:#38363f;
+  --playing:#4ade80; --playing-glow:rgba(74,222,128,0.18);
+  --danger:#ef4444; --danger-soft:rgba(239,68,68,0.1);
+  --font:'Tajawal',sans-serif; --mono:'DM Mono',monospace;
+  --r:20px; --rs:12px; --ease:0.3s cubic-bezier(0.4,0,0.2,1); --spring:0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 70% 50% at 15% -5%,rgba(232,160,60,0.09) 0%,transparent 55%),
+             radial-gradient(ellipse 55% 40% at 85% 105%,rgba(74,100,222,0.07) 0%,transparent 55%)}
+
+/* SCREENS */
+.screen{position:relative;z-index:1}
+#authScreen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+#appScreen{display:none}
+
+/* AUTH */
+.auth-logo{margin-bottom:32px;text-align:center;animation:fadeUp .5s ease both}
+.auth-logo-icon{width:72px;height:72px;border-radius:20px;margin:0 auto 12px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-size:32px;
+  box-shadow:0 8px 40px var(--accent-glow),0 0 0 1px rgba(255,255,255,0.08)}
+.auth-logo-title{font-size:30px;font-weight:900;letter-spacing:-1px;
+  background:linear-gradient(135deg,var(--accent),#f5d890);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.auth-logo-sub{font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:3px;text-transform:uppercase;margin-top:4px}
+
+.auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);
+  border-radius:24px;padding:26px 22px;animation:fadeUp .5s .1s ease both;box-shadow:0 24px 80px rgba(0,0,0,0.5)}
+
+.auth-tabs{display:flex;gap:4px;background:var(--card);border-radius:var(--rs);padding:4px;margin-bottom:22px}
+.auth-tab{flex:1;padding:9px;border:none;border-radius:8px;cursor:pointer;font-family:var(--font);font-size:14px;font-weight:600;
+  background:transparent;color:var(--text-muted);transition:var(--ease)}
+.auth-tab.active{background:var(--surface);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+
+.auth-form{display:flex;flex-direction:column;gap:12px}
+.auth-form.hidden{display:none}
+.inp-wrap{position:relative}
+.inp-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none}
+.auth-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--rs);
+  padding:14px 44px 14px 14px;color:var(--text);font-family:var(--font);font-size:15px;
+  outline:none;transition:var(--ease);-webkit-appearance:none}
+.auth-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.auth-input::placeholder{color:var(--text-dim)}
+
+.auth-btn{width:100%;padding:14px;border:none;border-radius:var(--rs);cursor:pointer;font-family:var(--font);font-size:15px;font-weight:700;transition:var(--ease)}
+.auth-btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#1a0f00;box-shadow:0 4px 20px var(--accent-glow)}
+.auth-btn.primary:active{transform:scale(0.97)}
+.auth-btn.primary:disabled{opacity:0.6;cursor:wait}
+.divider{display:flex;align-items:center;gap:12px;font-size:11px;color:var(--text-dim);letter-spacing:1px;margin:2px 0}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.auth-btn.google{background:var(--card);border:1px solid var(--border);color:var(--text);
+  display:flex;align-items:center;justify-content:center;gap:10px}
+.auth-btn.google:active{background:var(--card-hover)}
+.google-logo{width:18px;height:18px;flex-shrink:0;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%23EA4335' d='M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z'/%3E%3Cpath fill='%234285F4' d='M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z'/%3E%3Cpath fill='%23FBBC05' d='M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z'/%3E%3Cpath fill='%2334A853' d='M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z'/%3E%3C/svg%3E") center/contain no-repeat}
+.auth-error{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:var(--rs);
+  padding:10px 14px;font-size:13px;color:#f87171;display:none;text-align:center;line-height:1.5}
+.auth-error.show{display:block}
+.auth-footer{text-align:center;margin-top:18px;font-size:12px;color:var(--text-muted);line-height:1.7}
+
+/* HEADER */
+.header{position:sticky;top:0;z-index:100;background:rgba(10,10,15,0.94);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);padding:12px 16px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 4px 16px var(--accent-glow);flex-shrink:0}
+.logo-text{font-size:18px;font-weight:800;letter-spacing:-.5px;
+  background:linear-gradient(135deg,var(--accent),#f0d090);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.logo-sub{font-family:var(--mono);font-size:8px;color:var(--text-muted);display:block;letter-spacing:2px;text-transform:uppercase;margin-top:-1px}
+.header-actions{display:flex;align-items:center;gap:8px}
+.user-btn{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);
+  border-radius:50px;padding:5px 12px 5px 5px;cursor:pointer;transition:var(--ease)}
+.user-btn:active{transform:scale(0.96)}
+.user-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#1a0f00;overflow:hidden}
+.user-avatar img{width:100%;height:100%;object-fit:cover}
+.user-name{font-size:12px;font-weight:600;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.add-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#1a0f00;
+  font-family:var(--font);font-weight:700;font-size:13px;padding:8px 14px;border-radius:50px;cursor:pointer;
+  white-space:nowrap;box-shadow:0 4px 20px var(--accent-glow);transition:var(--ease);display:flex;align-items:center;gap:5px}
+.add-btn:active{transform:scale(0.96)}
+
+/* NOW PLAYING */
+.now-playing-bar{position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(13,13,20,0.97);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid var(--border);
+  padding:12px 16px;padding-bottom:max(12px,env(safe-area-inset-bottom));
+  transform:translateY(100%);transition:transform var(--ease);display:flex;align-items:center;gap:12px}
+.now-playing-bar.visible{transform:translateY(0)}
+.np-thumb{width:46px;height:46px;border-radius:10px;object-fit:cover;background:var(--card);flex-shrink:0;border:1px solid var(--border)}
+.np-thumb-ph{width:46px;height:46px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.np-info{flex:1;min-width:0}
+.np-name{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.np-status{display:flex;align-items:center;gap:6px;margin-top:2px}
+.np-dot{width:6px;height:6px;border-radius:50%;background:var(--playing);box-shadow:0 0 8px var(--playing);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.np-label{font-size:11px;color:var(--playing);font-weight:500}
+.vol-row{display:flex;align-items:center;gap:7px;margin-top:7px}
+.vol-icon{font-size:11px;color:var(--text-muted)}
+input[type=range].vol{-webkit-appearance:none;flex:1;height:3px;border-radius:2px;background:var(--border);outline:none}
+input[type=range].vol::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 0 8px var(--accent-glow)}
+.np-stop{width:42px;height:42px;border-radius:50%;border:1px solid rgba(239,68,68,0.2);cursor:pointer;
+  background:var(--danger-soft);color:var(--danger);font-size:16px;display:flex;align-items:center;justify-content:center;
+  transition:var(--ease);flex-shrink:0}
+.np-stop:active{transform:scale(.9);background:rgba(239,68,68,0.2)}
+
+/* MAIN */
+.main{position:relative;z-index:1;padding:20px 14px 130px;max-width:600px;margin:0 auto}
+.section-label{font-family:var(--mono);font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--text-muted);margin-bottom:16px;padding-right:2px}
+
+/* GRID */
+.stations-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(min-width:400px){.stations-grid{grid-template-columns:repeat(3,1fr)}}
+
+/* CARD */
+.station-card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);overflow:hidden;cursor:pointer;
+  transition:var(--ease);position:relative;aspect-ratio:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:12px;gap:10px;animation:cardIn .4s ease both}
+@keyframes cardIn{from{opacity:0;transform:scale(.88) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.station-card:active{transform:scale(.95)}
+.station-card:hover{background:var(--card-hover);border-color:var(--border-light)}
+.station-card.playing{border-color:var(--playing);box-shadow:0 0 0 1px var(--playing),0 6px 28px var(--playing-glow)}
+.station-card.playing::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(74,222,128,0.04),transparent);pointer-events:none}
+.buffering-ring{position:absolute;inset:-1px;border-radius:inherit;border:2px solid transparent;
+  border-top-color:var(--accent);animation:spin .9s linear infinite;display:none;pointer-events:none}
+.station-card.buffering .buffering-ring{display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.eq-badge{position:absolute;top:10px;left:10px;background:var(--playing);border-radius:50px;padding:3px 7px;display:none;align-items:center;gap:3px}
+.station-card.playing .eq-badge{display:flex}
+.eq-bar{width:2px;border-radius:2px;background:#0a0a0f;animation:eq .8s ease-in-out infinite}
+.eq-bar:nth-child(1){height:6px;animation-delay:0s}.eq-bar:nth-child(2){height:10px;animation-delay:.2s}.eq-bar:nth-child(3){height:7px;animation-delay:.1s}
+@keyframes eq{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+.edit-btn-card{position:absolute;top:9px;right:9px;width:26px;height:26px;background:rgba(0,0,0,0.55);
+  backdrop-filter:blur(8px);border:1px solid var(--border-light);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text);
+  cursor:pointer;opacity:0;transition:var(--ease);z-index:10}
+.station-card:hover .edit-btn-card{opacity:1}
+.station-thumb-wrap{width:60px;height:60px;border-radius:14px;overflow:hidden;flex-shrink:0}
+.station-thumb{width:100%;height:100%;object-fit:cover;transition:var(--ease)}
+.station-card.playing .station-thumb{transform:scale(1.06)}
+.station-thumb-ph{width:100%;height:100%;background:linear-gradient(135deg,#1e1e2a,#2a2a3e);display:flex;align-items:center;justify-content:center;font-size:26px}
+.station-name{font-size:12px;font-weight:700;text-align:center;line-height:1.3;width:100%;overflow:hidden;
+  text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:50px 20px;grid-column:1/-1}
+.empty-icon{font-size:52px;margin-bottom:14px;display:block;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.empty-title{font-size:18px;font-weight:700;margin-bottom:8px}
+.empty-sub{font-size:13px;color:var(--text-muted);line-height:1.7}
+
+/* LOADING */
+.loading-dots{display:flex;gap:6px;justify-content:center;align-items:center;padding:50px;grid-column:1/-1}
+.loading-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:dotPulse 1.2s ease-in-out infinite}
+.loading-dot:nth-child(2){animation-delay:.2s}.loading-dot:nth-child(3){animation-delay:.4s}
+@keyframes dotPulse{0%,80%,100%{transform:scale(.5);opacity:.4}40%{transform:scale(1);opacity:1}}
+
+/* OVERLAY / MODAL */
+.overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s ease}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border-radius:28px 28px 0 0;width:100%;max-width:560px;
+  padding:0 0 max(24px,env(safe-area-inset-bottom));transform:translateY(50px);
+  transition:transform var(--spring);border:1px solid var(--border);border-bottom:none;max-height:92vh;overflow-y:auto}
+.overlay.open .modal{transform:translateY(0)}
+.modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:14px auto 22px}
+.modal-title{font-size:20px;font-weight:800;padding:0 22px;margin-bottom:22px}
+.form-group{padding:0 18px;margin-bottom:14px}
+.form-label{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;display:block}
+.form-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--rs);
+  padding:13px 15px;color:var(--text);font-family:var(--font);font-size:15px;outline:none;transition:var(--ease);-webkit-appearance:none}
+.form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.form-input::placeholder{color:var(--text-dim)}
+.icon-row{display:flex;align-items:center;gap:12px;margin-top:10px;padding:0 18px}
+.icon-prev{width:50px;height:50px;border-radius:12px;object-fit:cover;background:var(--card);border:1px solid var(--border);display:none}
+.icon-prev-ph{width:50px;height:50px;border-radius:12px;background:var(--card);border:1px dashed var(--text-dim);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.icon-hint{font-size:11px;color:var(--text-muted);line-height:1.6}
+.modal-btns{display:flex;gap:10px;padding:18px 18px 0}
+.btn-p{flex:1;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#1a0f00;font-family:var(--font);font-weight:700;font-size:15px;border:none;border-radius:var(--rs);padding:14px;cursor:pointer;transition:var(--ease);box-shadow:0 4px 20px var(--accent-glow)}
+.btn-p:active{transform:scale(.97)}.btn-p:disabled{opacity:.6;cursor:wait}
+.btn-s{background:var(--card);color:var(--text);font-family:var(--font);font-weight:600;font-size:15px;border:1px solid var(--border);border-radius:var(--rs);padding:14px 18px;cursor:pointer;transition:var(--ease);white-space:nowrap}
+.del-row{padding:6px 18px 0}
+.btn-del{width:100%;background:var(--danger-soft);color:var(--danger);font-family:var(--font);font-weight:600;font-size:15px;border:1px solid rgba(239,68,68,0.2);border-radius:var(--rs);padding:14px;cursor:pointer;transition:var(--ease)}
+.btn-del:active{background:rgba(239,68,68,0.2)}
+
+/* USER MENU */
+.user-profile-header{padding:24px 22px 20px;display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--border)}
+.user-profile-avatar{width:56px;height:56px;border-radius:50%;overflow:hidden;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#1a0f00}
+.user-profile-avatar img{width:100%;height:100%;object-fit:cover}
+.user-profile-name{font-size:17px;font-weight:800;margin-bottom:2px}
+.user-profile-email{font-size:12px;color:var(--text-muted);font-family:var(--mono)}
+.user-profile-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(232,160,60,0.08);
+  border:1px solid rgba(232,160,60,0.22);border-radius:50px;padding:2px 8px;font-size:10px;color:var(--accent);font-weight:600;margin-top:6px}
+.user-menu-list{padding:12px 18px;display:flex;flex-direction:column;gap:4px}
+.user-menu-item{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:var(--rs);cursor:pointer;
+  transition:var(--ease);border:none;background:transparent;color:var(--text);font-family:var(--font);
+  font-size:14px;font-weight:500;width:100%;text-align:right}
+.user-menu-item:hover{background:var(--card)}
+.user-menu-item.danger{color:var(--danger)}
+.user-menu-item span{font-size:18px}
+
+/* TOAST */
+.toast{position:fixed;top:76px;left:50%;z-index:1000;transform:translateX(-50%) translateY(-14px);
+  background:var(--surface);border:1px solid var(--border);border-radius:50px;padding:9px 18px;
+  font-size:13px;font-weight:500;white-space:nowrap;opacity:0;pointer-events:none;transition:all .3s ease;
+  box-shadow:0 6px 28px rgba(0,0,0,0.5)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="authScreen" class="screen">
+  <div class="auth-logo">
+    <div class="auth-logo-icon">📻</div>
+    <div class="auth-logo-title">راديو</div>
+    <div class="auth-logo-sub">Radio Hub</div>
+  </div>
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">تسجيل الدخول</button>
+      <button class="auth-tab" id="tabRegister" onclick="switchTab('register')">حساب جديد</button>
+    </div>
+    <!-- Login -->
+    <div class="auth-form" id="loginForm">
+      <div class="inp-wrap">
+        <span class="inp-icon">✉️</span>
+        <input class="auth-input" id="loginEmail" type="email" placeholder="البريد الإلكتروني" dir="ltr" autocomplete="email" />
+      </div>
+      <div class="inp-wrap">
+        <span class="inp-icon">🔑</span>
+        <input class="auth-input" id="loginPass" type="password" placeholder="كلمة المرور" dir="ltr" autocomplete="current-password" />
+      </div>
+      <div class="auth-error" id="loginError"></div>
+      <button class="auth-btn primary" id="loginBtn" onclick="doLogin()">دخول</button>
+      <div class="divider">أو</div>
+      <button class="auth-btn google" onclick="doGoogle()"><div class="google-logo"></div><span>المتابعة مع Google</span></button>
+    </div>
+    <!-- Register -->
+    <div class="auth-form hidden" id="registerForm">
+      <div class="inp-wrap">
+        <span class="inp-icon">👤</span>
+        <input class="auth-input" id="regName" type="text" placeholder="الاسم الكامل" />
+      </div>
+      <div class="inp-wrap">
+        <span class="inp-icon">✉️</span>
+        <input class="auth-input" id="regEmail" type="email" placeholder="البريد الإلكتروني" dir="ltr" autocomplete="email" />
+      </div>
+      <div class="inp-wrap">
+        <span class="inp-icon">🔑</span>
+        <input class="auth-input" id="regPass" type="password" placeholder="كلمة المرور (6 أحرف أو أكثر)" dir="ltr" autocomplete="new-password" />
+      </div>
+      <div class="auth-error" id="regError"></div>
+      <button class="auth-btn primary" id="regBtn" onclick="doRegister()">إنشاء حساب</button>
+      <div class="divider">أو</div>
+      <button class="auth-btn google" onclick="doGoogle()"><div class="google-logo"></div><span>التسجيل مع Google</span></button>
+    </div>
+  </div>
+  <div class="auth-footer">بياناتك محفوظة بشكل خاص لكل مستخدم على Firebase 🔒</div>
+</div>
+
+<!-- APP SCREEN -->
+<div id="appScreen" class="screen">
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon">📻</div>
+      <div>
+        <div class="logo-text">راديو</div>
+        <span class="logo-sub">Radio Hub</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="add-btn" onclick="openAddModal()">＋ إضافة</button>
+      <div class="user-btn" onclick="openUserMenu()">
+        <div class="user-avatar" id="headerAvatar"></div>
+        <span class="user-name" id="headerName">—</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="section-label">محطاتي — My Stations</div>
+    <div class="stations-grid" id="stationsGrid">
+      <div class="loading-dots"><div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div></div>
+    </div>
+  </main>
+
+  <div class="now-playing-bar" id="nowPlayingBar">
+    <div id="npThumbWrap"></div>
+    <div class="np-info">
+      <div class="np-name" id="npName">—</div>
+      <div class="np-status"><div class="np-dot"></div><div class="np-label">يبث الآن — Live</div></div>
+      <div class="vol-row">
+        <span class="vol-icon">🔈</span>
+        <input type="range" class="vol" id="volSlider" min="0" max="100" value="80" oninput="setVolume(this.value)">
+        <span class="vol-icon">🔊</span>
+      </div>
+    </div>
+    <button class="np-stop" onclick="stopStation()">■</button>
+  </div>
+</div>
+
+<!-- STATION MODAL -->
+<div class="overlay" id="stationOverlay" onclick="overlayClick(event,'stationOverlay')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modalTitle">إضافة محطة جديدة</div>
+    <div class="form-group">
+      <label class="form-label">اسم المحطة</label>
+      <input class="form-input" id="inputName" type="text" placeholder="مثال: راديو النيل" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">رابط البث — Stream URL</label>
+      <input class="form-input" id="inputUrl" type="url" placeholder="https://stream.example.com/radio" dir="ltr" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">رابط الأيقونة (اختياري)</label>
+      <input class="form-input" id="inputIcon" type="url" placeholder="https://example.com/logo.png" dir="ltr" oninput="previewIcon()" />
+    </div>
+    <div class="icon-row">
+      <img class="icon-prev" id="iconPrev" alt="" />
+      <div class="icon-prev-ph" id="iconPrevPh">📻</div>
+      <div class="icon-hint">أدخل رابط صورة للأيقونة<br>أو اتركه فارغاً للأيقونة الافتراضية</div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-s" onclick="closeStationModal()">إلغاء</button>
+      <button class="btn-p" id="saveBtn" onclick="saveStation()">حفظ</button>
+    </div>
+    <div class="del-row" id="deleteRow" style="display:none">
+      <button class="btn-del" onclick="deleteStation()">🗑 حذف المحطة</button>
+    </div>
+  </div>
+</div>
+
+<!-- USER MENU MODAL -->
+<div class="overlay" id="userMenuOverlay" onclick="overlayClick(event,'userMenuOverlay')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="user-profile-header">
+      <div class="user-profile-avatar" id="profileAvatar"></div>
+      <div>
+        <div class="user-profile-name" id="profileName">—</div>
+        <div class="user-profile-email" id="profileEmail">—</div>
+        <div class="user-profile-badge">✓ مسجّل الدخول</div>
+      </div>
+    </div>
+    <div class="user-menu-list">
+      <button class="user-menu-item danger" onclick="doSignOut()">
+        <span>🚪</span> تسجيل الخروج
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<audio id="audioPlayer" preload="none"></audio>
+
+<script type="module">
+import { initializeApp }
+  from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+         GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, updateProfile }
+  from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy }
+  from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBRvU198Ov7i6XdQTiKkuPJ-8biyKQt0Eo",
+  authDomain: "radioapp-4f31a.firebaseapp.com",
+  projectId: "radioapp-4f31a",
+  storageBucket: "radioapp-4f31a.firebasestorage.app",
+  messagingSenderId: "109582001862",
+  appId: "1:109582001862:web:0f88fc50166c6d3d3019c7"
+};
+
+const app       = initializeApp(firebaseConfig);
+const auth      = getAuth(app);
+const db        = getFirestore(app);
+const gProvider = new GoogleAuthProvider();
+
+// ── STATE ──
+let currentUser    = null;
+let stations       = [];
+let currentStation = null;
+let editingId      = null;
+let unsubStations  = null;
+const audio        = document.getElementById('audioPlayer');
+
+// ── AUTH STATE ──
+onAuthStateChanged(auth, user => {
+  if (user) {
+    currentUser = user;
+    showApp(user);
+    subscribeStations(user.uid);
+  } else {
+    currentUser = null;
+    if (unsubStations) { unsubStations(); unsubStations = null; }
+    showAuth();
+  }
+});
+
+function showAuth() {
+  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('appScreen').style.display  = 'none';
+  stopStation();
+}
+
+function showApp(user) {
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display  = 'block';
+  const name  = user.displayName || user.email.split('@')[0];
+  const photo = user.photoURL;
+  document.getElementById('headerName').textContent  = name;
+  document.getElementById('profileName').textContent  = name;
+  document.getElementById('profileEmail').textContent = user.email;
+  [document.getElementById('headerAvatar'), document.getElementById('profileAvatar')].forEach(el => {
+    el.innerHTML = photo
+      ? `<img src="${photo}" alt="" onerror="this.parentNode.textContent='${esc(name[0].toUpperCase())}'">`
+      : esc(name[0].toUpperCase());
+  });
+}
+
+// ── FIRESTORE ──
+function subscribeStations(uid) {
+  if (unsubStations) unsubStations();
+  const q = query(collection(db, `users/${uid}/stations`), orderBy('createdAt','asc'));
+  unsubStations = onSnapshot(q, snap => {
+    stations = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderGrid(stations);
+  }, () => showToast('❌ خطأ في تحميل المحطات'));
+}
+
+// ── RENDER ──
+function renderGrid(data) {
+  const grid = document.getElementById('stationsGrid');
+  if (!data.length) {
+    grid.innerHTML = `<div class="empty-state"><span class="empty-icon">📡</span><div class="empty-title">لا توجد محطات بعد</div><div class="empty-sub">اضغط "إضافة" لإضافة<br>أولى محطات الراديو الخاصة بك</div></div>`;
+    return;
+  }
+  grid.innerHTML = data.map((s, i) => {
+    const playing = currentStation && currentStation.id === s.id;
+    const thumb = s.icon
+      ? `<img class="station-thumb" src="${esc(s.icon)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="station-thumb-ph" style="display:none">📻</div>`
+      : `<div class="station-thumb-ph">📻</div>`;
+    return `<div class="station-card ${playing?'playing':''}" id="card-${esc(s.id)}" onclick="window._play('${esc(s.id)}')" style="animation-delay:${i*.05}s">
+      <div class="buffering-ring"></div>
+      <div class="eq-badge"><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div></div>
+      <button class="edit-btn-card" onclick="event.stopPropagation();window._editModal('${esc(s.id)}')">✎</button>
+      <div class="station-thumb-wrap">${thumb}</div>
+      <div class="station-name">${esc(s.name)}</div>
+    </div>`;
+  }).join('');
+}
+
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ── PLAYBACK ──
+window._play = id => {
+  const s = stations.find(x => x.id === id); if (!s) return;
+  if (currentStation && currentStation.id === id) {
+    if (!audio.paused) { audio.pause(); updateNP(null); showToast('⏸ إيقاف مؤقت'); return; }
+    else { audio.play().catch(()=>{}); updateNP(s); return; }
+  }
+  audio.pause(); audio.src = '';
+  setCard(id,'buffering');
+  audio.src = s.url;
+  audio.volume = document.getElementById('volSlider').value / 100;
+  currentStation = s;
+  audio.play()
+    .then(() => { setCard(id,'playing'); updateNP(s); showToast('▶ '+s.name); })
+    .catch(() => { setCard(id,'idle'); showToast('❌ تعذّر تشغيل المحطة'); currentStation=null; updateNP(null); });
+};
+
+window.stopStation = () => {
+  audio.pause(); audio.src = '';
+  const p = currentStation; currentStation = null;
+  if (p) setCard(p.id,'idle');
+  updateNP(null); showToast('■ تم الإيقاف');
+};
+
+window.setVolume = v => { audio.volume = v/100; };
+
+function setCard(id, state) {
+  const c = document.getElementById('card-'+id); if (!c) return;
+  c.classList.remove('playing','buffering');
+  if (state==='playing') c.classList.add('playing');
+  if (state==='buffering') c.classList.add('buffering');
+}
+
+function updateNP(s) {
+  const bar = document.getElementById('nowPlayingBar');
+  if (!s) { bar.classList.remove('visible'); renderGrid(stations); return; }
+  bar.classList.add('visible');
+  document.getElementById('npName').textContent = s.name;
+  document.getElementById('npThumbWrap').innerHTML = s.icon
+    ? `<img class="np-thumb" src="${esc(s.icon)}" alt="" onerror="this.parentNode.innerHTML='<div class=np-thumb-ph>📻</div>'">`
+    : `<div class="np-thumb-ph">📻</div>`;
+  renderGrid(stations);
+}
+
+audio.addEventListener('waiting', () => { if (currentStation) setCard(currentStation.id,'buffering'); });
+audio.addEventListener('playing', () => { if (currentStation) setCard(currentStation.id,'playing'); });
+audio.addEventListener('error',   () => { showToast('❌ انقطع الاتصال'); if (currentStation){ setCard(currentStation.id,'idle'); currentStation=null; updateNP(null); } });
+
+if ('mediaSession' in navigator) {
+  navigator.mediaSession.setActionHandler('play',  () => audio.play());
+  navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+  navigator.mediaSession.setActionHandler('stop',  stopStation);
+}
+audio.addEventListener('playing', () => {
+  if ('mediaSession' in navigator && currentStation)
+    navigator.mediaSession.metadata = new MediaMetadata({ title: currentStation.name, artist: 'Radio Hub', album: 'بث مباشر' });
+});
+
+// ── STATION MODAL ──
+window.openAddModal = () => {
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'إضافة محطة جديدة';
+  document.getElementById('saveBtn').textContent = 'حفظ';
+  ['inputName','inputUrl','inputIcon'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('deleteRow').style.display = 'none';
+  clearIconPrev();
+  openOverlay('stationOverlay');
+  setTimeout(() => document.getElementById('inputName').focus(), 350);
+};
+
+window._editModal = id => {
+  const s = stations.find(x => x.id === id); if (!s) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'تعديل المحطة';
+  document.getElementById('saveBtn').textContent = 'تحديث';
+  document.getElementById('inputName').value = s.name || '';
+  document.getElementById('inputUrl').value  = s.url  || '';
+  document.getElementById('inputIcon').value = s.icon || '';
+  document.getElementById('deleteRow').style.display = 'block';
+  previewIcon();
+  openOverlay('stationOverlay');
+};
+
+window.closeStationModal = () => closeOverlay('stationOverlay');
+
+window.previewIcon = () => {
+  const url = document.getElementById('inputIcon').value.trim();
+  const img = document.getElementById('iconPrev');
+  const ph  = document.getElementById('iconPrevPh');
+  if (url) {
+    img.src = url; img.style.display='block'; ph.style.display='none';
+    img.onerror = () => { img.style.display='none'; ph.style.display='flex'; };
+  } else clearIconPrev();
+};
+
+function clearIconPrev() {
+  document.getElementById('iconPrev').style.display='none';
+  document.getElementById('iconPrevPh').style.display='flex';
+}
+
+window.saveStation = async () => {
+  if (!currentUser) return;
+  const name = document.getElementById('inputName').value.trim();
+  const url  = document.getElementById('inputUrl').value.trim();
+  const icon = document.getElementById('inputIcon').value.trim();
+  if (!name) { showToast('⚠️ أدخل اسم المحطة'); return; }
+  if (!url)  { showToast('⚠️ أدخل رابط البث'); return; }
+  if (!url.startsWith('http')) { showToast('⚠️ الرابط يجب أن يبدأ بـ http'); return; }
+  const btn = document.getElementById('saveBtn');
+  btn.textContent='...'; btn.disabled=true;
+  const uid = currentUser.uid;
+  try {
+    if (editingId) {
+      await updateDoc(doc(db,`users/${uid}/stations`,editingId), { name, url, icon, updatedAt: Date.now() });
+      showToast('✓ تم التحديث');
+    } else {
+      await addDoc(collection(db,`users/${uid}/stations`), { name, url, icon, createdAt: Date.now(), updatedAt: Date.now() });
+      showToast('✓ تمت الإضافة');
+    }
+    closeStationModal();
+  } catch(e) { showToast('❌ ' + e.message); }
+  btn.textContent = editingId ? 'تحديث' : 'حفظ'; btn.disabled=false;
+};
+
+window.deleteStation = async () => {
+  if (!editingId || !currentUser) return;
+  if (!confirm('هل تريد حذف هذه المحطة؟')) return;
+  if (currentStation && currentStation.id === editingId) stopStation();
+  try {
+    await deleteDoc(doc(db,`users/${currentUser.uid}/stations`,editingId));
+    closeStationModal(); showToast('🗑 تم الحذف');
+  } catch(e) { showToast('❌ خطأ في الحذف'); }
+};
+
+// ── USER MENU ──
+window.openUserMenu = () => openOverlay('userMenuOverlay');
+
+function openOverlay(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeOverlay(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow='';
+}
+window.overlayClick = (e, id) => { if (e.target === document.getElementById(id)) closeOverlay(id); };
+
+// ── AUTH ACTIONS ──
+window.switchTab = tab => {
+  const isLogin = tab === 'login';
+  document.getElementById('tabLogin').classList.toggle('active', isLogin);
+  document.getElementById('tabRegister').classList.toggle('active', !isLogin);
+  document.getElementById('loginForm').classList.toggle('hidden', !isLogin);
+  document.getElementById('registerForm').classList.toggle('hidden', isLogin);
+  clearErrors();
+};
+
+function clearErrors() {
+  ['loginError','regError'].forEach(id => { const el=document.getElementById(id); el.textContent=''; el.classList.remove('show'); });
+}
+function showError(id, msg) { const el=document.getElementById(id); el.textContent=msg; el.classList.add('show'); }
+
+function authMsg(code) {
+  return ({
+    'auth/invalid-email':'البريد الإلكتروني غير صحيح',
+    'auth/user-not-found':'لا يوجد حساب بهذا البريد',
+    'auth/wrong-password':'كلمة المرور غير صحيحة',
+    'auth/invalid-credential':'البريد أو كلمة المرور غير صحيحة',
+    'auth/email-already-in-use':'البريد مستخدم مسبقاً',
+    'auth/weak-password':'كلمة المرور ضعيفة (6 أحرف أو أكثر)',
+    'auth/too-many-requests':'تجاوزت عدد المحاولات، حاول لاحقاً',
+    'auth/popup-closed-by-user':'تم إغلاق نافذة Google',
+    'auth/network-request-failed':'خطأ في الاتصال بالإنترنت',
+  })[code] || 'حدث خطأ، حاول مجدداً';
+}
+
+window.doLogin = async () => {
+  clearErrors();
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  if (!email||!pass) { showError('loginError','أدخل البريد وكلمة المرور'); return; }
+  const btn = document.getElementById('loginBtn');
+  btn.textContent='...'; btn.disabled=true;
+  try { await signInWithEmailAndPassword(auth, email, pass); }
+  catch(e) { showError('loginError', authMsg(e.code)); }
+  btn.textContent='دخول'; btn.disabled=false;
+};
+
+window.doRegister = async () => {
+  clearErrors();
+  const name  = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass  = document.getElementById('regPass').value;
+  if (!name)  { showError('regError','أدخل اسمك'); return; }
+  if (!email) { showError('regError','أدخل البريد الإلكتروني'); return; }
+  if (!pass)  { showError('regError','أدخل كلمة المرور'); return; }
+  const btn = document.getElementById('regBtn');
+  btn.textContent='...'; btn.disabled=true;
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    await updateProfile(cred.user, { displayName: name });
+  } catch(e) { showError('regError', authMsg(e.code)); }
+  btn.textContent='إنشاء حساب'; btn.disabled=false;
+};
+
+window.doGoogle = async () => {
+  clearErrors();
+  try { await signInWithPopup(auth, gProvider); }
+  catch(e) {
+    const loginVisible = !document.getElementById('loginForm').classList.contains('hidden');
+    showError(loginVisible ? 'loginError' : 'regError', authMsg(e.code));
+  }
+};
+
+window.doSignOut = async () => {
+  closeOverlay('userMenuOverlay');
+  await signOut(auth);
+  showToast('👋 تم تسجيل الخروج');
+};
+
+// ── TOAST ──
+let toastTimer;
+window.showToast = msg => {
+  const t = document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+};
+
+// Enter key on auth
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (!document.getElementById('loginForm').classList.contains('hidden')) doLogin();
+  else doRegister();
+});
+</script>
+</body>
+</html>
