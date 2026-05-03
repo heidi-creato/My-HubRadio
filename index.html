@@ -7,7 +7,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
   
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -97,8 +96,11 @@
     
     @media (max-width: 768px) { .app { flex-direction: column; } .sidebar { width: 100%; height: auto; position: relative; } .mini-player { flex-direction: column; height: auto; gap: 10px; padding: 15px; } }
     .upload-preview { margin: 10px 0; text-align: center; }
-    .upload-preview img { max-width: 80px; border-radius: 12px; }
+    .upload-preview img { max-width: 80px; border-radius: 12px; border: 2px solid #22c55e; }
     .cloudinary-upload-btn { background: linear-gradient(135deg, #3448C5, #1E2A6E) !important; color: white !important; margin-top: 10px; }
+    .image-upload-container { border: 2px dashed rgba(255,255,255,0.2); border-radius: 12px; padding: 15px; text-align: center; cursor: pointer; transition: all 0.3s; margin-bottom: 12px; }
+    .image-upload-container:hover { border-color: #22c55e; background: rgba(34,197,94,0.1); }
+    .upload-loading { display: inline-block; width: 20px; height: 20px; border: 2px solid #fff; border-radius: 50%; border-top-color: transparent; animation: spin 0.6s linear infinite; margin-right: 8px; }
   </style>
 </head>
 <body>
@@ -154,7 +156,7 @@
     </main>
   </div>
 
-  <!-- modal اضافة المحطات مع Cloudinary -->
+  <!-- modal اضافة المحطات -->
   <div class="modal hidden" id="radioModal">
     <div class="modal-content glass-card">
       <h2>➕ محطة راديو جديدة</h2>
@@ -162,13 +164,20 @@
       <input type="text" id="radioUrl" placeholder="رابط البث المباشر * (مثل .mp3, .m3u8)">
       <input type="text" id="radioCategory" placeholder="التصنيف (موسيقى, اخبار, رياضة)">
       
-      <!-- Cloudinary Upload Widget -->
-      <button id="uploadCloudinaryBtn" class="cloudinary-upload-btn"><i class="fab fa-cloudinary"></i> رفع صورة من Cloudinary</button>
+      <!-- رفع صورة بطريقة بسيطة تعمل على الجوال والكمبيوتر -->
+      <div class="image-upload-container" id="imageUploadArea">
+        <i class="fas fa-cloud-upload-alt" style="font-size: 32px; margin-bottom: 8px; display: block;"></i>
+        <span>📸 اضغط لرفع صورة المحطة</span>
+        <input type="file" id="radioImage" accept="image/*" style="display: none;">
+      </div>
+      
       <div id="imagePreview" class="upload-preview hidden">
         <img id="previewImg" src="">
-        <p style="font-size:12px; margin-top:5px;">الصورة المرفوعة</p>
+        <p style="font-size:12px; margin-top:5px;">✅ الصورة المرفوعة</p>
       </div>
-      <input type="hidden" id="cloudinaryImageUrl">
+      <div id="uploadProgress" class="hidden" style="text-align: center; margin: 10px 0; color: #22c55e;">
+        <span class="upload-loading"></span> جاري رفع الصورة...
+      </div>
       
       <button id="saveRadioBtn">💾 حفظ المحطة</button>
       <button id="closeModalBtn">❌ إلغاء</button>
@@ -204,10 +213,9 @@
       appId: "1:109582001862:web:0f88fc50166c6d3d3019c7"
     };
 
-    // 🔑 تكوين Cloudinary - استبدل هذه البيانات ببيانات حسابك من cloudinary.com
-    // سجل مجاناً على https://cloudinary.com وأضف بياناتك هنا
-    const CLOUDINARY_CLOUD_NAME = "dzshfcvkg"; // استبدل باسم السحابة الخاص بك
-    const CLOUDINARY_UPLOAD_PRESET = "radio_preset"; // ستحتاج لإنشاء upload preset في لوحة التحكم
+    // 🔑 تكوين Cloudinary - استبدل هذه البيانات ببيانات حسابك
+    const CLOUDINARY_CLOUD_NAME = "dzshfcvkg"; // اسم السحابة الخاص بي (يمكنك تغييره)
+    const CLOUDINARY_UPLOAD_PRESET = "radio_preset"; // upload preset
     
     // تهيئة Firebase
     firebase.initializeApp(firebaseConfig);
@@ -243,56 +251,35 @@
       return str.replace(/[&<>]/g, function(m) { if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m; });
     }
 
-    // تهيئة Cloudinary Upload Widget
-    function initCloudinaryWidget() {
-      if (!CLOUDINARY_CLOUD_NAME || CLOUDINARY_CLOUD_NAME === "YOUR_CLOUD_NAME") {
-        console.warn("⚠️ يرجى إدخال بيانات Cloudinary الصحيحة في الكود");
-        document.getElementById('uploadCloudinaryBtn').style.opacity = '0.5';
-        document.getElementById('uploadCloudinaryBtn').title = 'يرجى إعداد Cloudinary أولاً';
-        return;
-      }
-      
-      const uploadButton = document.getElementById('uploadCloudinaryBtn');
-      uploadButton.onclick = () => {
-        cloudinary.openUploadWidget({
-          cloudName: CLOUDINARY_CLOUD_NAME,
-          uploadPreset: CLOUDINARY_UPLOAD_PRESET,
-          sources: ['local', 'url', 'camera'],
-          cropping: true,
-          multiple: false,
-          maxFileSize: 5000000, // 5MB
-          clientAllowedFormats: ['image/*'],
-          showAdvancedOptions: false,
-          styles: {
-            palette: {
-              window: "#0f172a",
-              windowBorder: "#22c55e",
-              tabIcon: "#22c55e",
-              menuIcons: "#22c55e",
-              textDark: "#ffffff",
-              textLight: "#ffffff",
-              link: "#22c55e",
-              action: "#22c55e",
-              inactiveTabIcon: "#64748b",
-              error: "#ef4444",
-              inProgress: "#3b82f6",
-              complete: "#22c55e"
-            }
+    // رفع الصورة إلى Cloudinary
+    async function uploadToCloudinary(file) {
+      return new Promise((resolve, reject) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, true);
+        
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const percent = (e.loaded / e.total) * 100;
+            document.getElementById('uploadProgress').innerHTML = `<span class="upload-loading"></span> جاري رفع الصورة: ${Math.round(percent)}%`;
           }
-        }, (error, result) => {
-          if (error) {
-            console.error("خطأ في الرفع:", error);
-            showToast('error', 'فشل رفع الصورة');
-          } else if (result && result.event === "success") {
-            const imageUrl = result.info.secure_url;
-            currentCloudinaryUrl = imageUrl;
-            document.getElementById('cloudinaryImageUrl').value = imageUrl;
-            document.getElementById('imagePreview').classList.remove('hidden');
-            document.getElementById('previewImg').src = imageUrl;
-            showToast('success', 'تم رفع الصورة بنجاح');
+        };
+        
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            const response = JSON.parse(xhr.responseText);
+            resolve(response.secure_url);
+          } else {
+            reject(new Error('فشل رفع الصورة'));
           }
-        });
-      };
+        };
+        
+        xhr.onerror = () => reject(new Error('خطأ في الشبكة'));
+        xhr.send(formData);
+      });
     }
 
     // الاستماع للمحطات من Firestore
@@ -325,7 +312,7 @@
         filtered = recentIds.map(id => radios.find(r => r.id == id)).filter(Boolean);
       }
       if(filtered.length === 0) {
-        grid.innerHTML = '<div class="empty-state"><i class="fas fa-radio" style="font-size:48px"></i><h3>لا توجد محطات</h3><p>أضف محطتك الأولى الآن</p><p style="font-size:12px; margin-top:10px;">يمكنك إضافة صورة عبر Cloudinary</p></div>';
+        grid.innerHTML = '<div class="empty-state"><i class="fas fa-radio" style="font-size:48px"></i><h3>لا توجد محطات</h3><p>أضف محطتك الأولى الآن</p></div>';
         return;
       }
       grid.innerHTML = filtered.map(radio => `
@@ -448,7 +435,54 @@
       document.getElementById('miniPlayer').classList.add('hidden');
     };
 
-    // حفظ المحطة مع رابط الصورة من Cloudinary
+    // رفع الصورة من الملف مباشرة
+    const imageUploadArea = document.getElementById('imageUploadArea');
+    const imageInput = document.getElementById('radioImage');
+    
+    imageUploadArea.onclick = () => {
+      imageInput.click();
+    };
+    
+    imageInput.onchange = async (e) => {
+      const file = e.target.files[0];
+      if(!file) return;
+      
+      if(!file.type.startsWith('image/')) {
+        showToast('error', 'الرجاء اختيار ملف صورة صالح');
+        return;
+      }
+      
+      if(file.size > 5 * 1024 * 1024) {
+        showToast('error', 'حجم الصورة يجب أن لا يتجاوز 5 ميجابايت');
+        return;
+      }
+      
+      // معاينة الصورة
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        document.getElementById('imagePreview').classList.remove('hidden');
+        document.getElementById('previewImg').src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+      
+      // رفع الصورة
+      document.getElementById('uploadProgress').classList.remove('hidden');
+      
+      try {
+        const imageUrl = await uploadToCloudinary(file);
+        currentCloudinaryUrl = imageUrl;
+        document.getElementById('uploadProgress').classList.add('hidden');
+        showToast('success', 'تم رفع الصورة بنجاح');
+      } catch(error) {
+        console.error(error);
+        document.getElementById('uploadProgress').classList.add('hidden');
+        showToast('error', 'فشل رفع الصورة، تأكد من إعدادات Cloudinary');
+        document.getElementById('imagePreview').classList.add('hidden');
+        currentCloudinaryUrl = null;
+      }
+    };
+
+    // حفظ المحطة
     document.getElementById('saveRadioBtn').onclick = async () => {
       const name = document.getElementById('radioName').value.trim();
       const streamUrl = document.getElementById('radioUrl').value.trim();
@@ -470,16 +504,18 @@
       document.getElementById('radioName').value = ''; 
       document.getElementById('radioUrl').value = '';
       document.getElementById('radioCategory').value = ''; 
-      document.getElementById('cloudinaryImageUrl').value = '';
       currentCloudinaryUrl = null;
       document.getElementById('imagePreview').classList.add('hidden');
+      imageInput.value = '';
     };
     
     document.getElementById('addRadioBtn').onclick = () => {
       currentCloudinaryUrl = null;
       document.getElementById('imagePreview').classList.add('hidden');
+      document.getElementById('uploadProgress').classList.add('hidden');
       document.getElementById('radioModal').classList.remove('hidden');
     };
+    
     document.getElementById('closeModalBtn').onclick = () => document.getElementById('radioModal').classList.add('hidden');
 
     // تحكمات المشغل
@@ -545,9 +581,6 @@
         hideSplash();
       }
     });
-    
-    // تهيئة Cloudinary Widget
-    initCloudinaryWidget();
     
     setTimeout(() => {
       if(!currentUser && !document.getElementById('authContainer').classList.contains('hidden')) {
