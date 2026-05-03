@@ -53,8 +53,8 @@
     /* التطبيق الرئيسي */
     .app { display: flex; min-height: 100vh; }
     .sidebar { width: 280px; padding: 25px; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; justify-content: space-between; overflow-y: auto; }
-    .sidebar h1 { margin-bottom: 25px; font-size: 1.5rem; }
-    .sidebar button { width: 100%; padding: 12px; margin-bottom: 15px; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; transition: transform 0.2s; }
+    .sidebar h1 { margin-bottom: 25px; font-size: 1.5rem; text-align: center; }
+    .sidebar button { width: 100%; padding: 12px; margin-bottom: 12px; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; transition: transform 0.2s; }
     .sidebar button:hover { transform: translateY(-2px); }
     #searchInput { width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: none; border-radius: 12px; color: white; margin-bottom: 20px; }
     #searchInput:focus { outline: none; border: 1px solid #22c55e; }
@@ -62,6 +62,7 @@
     .menu-item:hover { background: rgba(255,255,255,0.1); }
     .menu-item.active { background: rgba(34,197,94,0.2); border-left: 3px solid #22c55e; }
     .logout-btn { background: linear-gradient(135deg, #ef4444, #dc2626) !important; }
+    .profile-btn { background: linear-gradient(135deg, #3b82f6, #1e40af) !important; margin-top: 10px; }
     .main-content { flex: 1; padding: 25px; overflow-y: auto; margin-bottom: 20px; }
     .topbar { margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
     .topbar h2 { background: linear-gradient(135deg, #22c55e, #3b82f6); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -81,7 +82,6 @@
     .radio-card img { width: 100%; height: 140px; object-fit: cover; border-radius: 16px; margin-bottom: 10px; background: #1e293b; transition: transform 0.2s; }
     .radio-card:hover img { transform: scale(1.02); }
     .radio-card h3 { font-size: 14px; margin-bottom: 4px; text-align: center; }
-    .radio-card p { font-size: 11px; color: rgba(255,255,255,0.6); text-align: center; display: none; }
     
     /* زر القائمة الثلاثية */
     .menu-dots {
@@ -101,9 +101,6 @@
       transition: all 0.2s;
     }
     .menu-dots:hover { background: #22c55e; transform: scale(1.05); }
-    .menu-dots i { color: white; font-size: 14px; }
-    
-    /* مؤشر السحب */
     .drag-handle {
       position: absolute;
       top: 12px;
@@ -118,8 +115,6 @@
       cursor: grab;
       z-index: 10;
     }
-    .drag-handle:active { cursor: grabbing; }
-    .drag-handle i { color: white; font-size: 14px; }
     
     /* عرض عمودي */
     .vertical-view .radio-grid { display: flex; flex-direction: column; gap: 12px; }
@@ -137,7 +132,25 @@
     .circle-view .menu-dots { top: 5px; right: 5px; width: 28px; height: 28px; }
     .circle-view .drag-handle { top: 5px; left: 5px; width: 28px; height: 28px; }
     
-    /* مشغل الصوت - مساحة أقل */
+    /* صفحة الملف الشخصي */
+    .profile-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .profile-card { width: 100%; max-width: 500px; padding: 40px; text-align: center; }
+    .profile-avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      object-fit: cover;
+      border: 4px solid #22c55e;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .profile-avatar:hover { transform: scale(1.05); }
+    .profile-card h2 { margin-bottom: 10px; }
+    .profile-card p { color: rgba(255,255,255,0.7); margin-bottom: 30px; }
+    .profile-input { width: 100%; padding: 12px; margin-bottom: 15px; background: rgba(255,255,255,0.1); border: none; border-radius: 12px; color: white; text-align: center; font-size: 16px; }
+    
+    /* مشغل الصوت */
     .mini-player { position: fixed; bottom: 0; left: 0; right: 0; height: 65px; background: rgba(15,23,42,0.98); backdrop-filter: blur(20px); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-top: 1px solid rgba(255,255,255,0.1); z-index: 1000; }
     .player-left { display: flex; align-items: center; gap: 12px; }
     .player-left img { width: 45px; height: 45px; border-radius: 10px; object-fit: cover; }
@@ -147,14 +160,17 @@
     .volume-wrapper input { width: 100px; }
     
     .empty-state { text-align: center; padding: 60px 20px; color: rgba(255,255,255,0.5); }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 1001; }
+    .modal-content { width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; padding: 25px; }
+    .modal-content input { width: 100%; padding: 12px; margin-bottom: 12px; background: rgba(255,255,255,0.1); border: none; border-radius: 10px; color: white; }
+    .image-upload-area { border: 2px dashed rgba(255,255,255,0.3); border-radius: 16px; padding: 15px; text-align: center; cursor: pointer; margin-bottom: 12px; }
+    .image-preview { text-align: center; margin: 10px 0; }
+    .image-preview img { width: 100px; height: 100px; border-radius: 16px; object-fit: cover; }
     
     @media (max-width: 768px) { 
       .app { flex-direction: column; } 
       .sidebar { width: 100%; height: auto; position: relative; } 
       .radio-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
-      .circle-view .radio-grid { gap: 15px; }
-      .circle-view .radio-card { width: 80px; }
-      .circle-view .radio-card img { width: 65px; height: 65px; }
     }
   </style>
 </head>
@@ -197,7 +213,10 @@
           <div class="menu-item" data-filter="favorites">❤️ المفضلة</div>
         </div>
       </div>
-      <button id="logoutBtn" class="logout-btn">🚪 خروج</button>
+      <div>
+        <button id="profileBtn" class="profile-btn">👤 ملفي الشخصي</button>
+        <button id="logoutBtn" class="logout-btn">🚪 خروج</button>
+      </div>
     </aside>
     <main class="main-content">
       <div class="topbar">
@@ -212,20 +231,34 @@
     </main>
   </div>
 
-  <!-- مودال إضافة/تعديل -->
+  <!-- صفحة الملف الشخصي -->
+  <div class="profile-container hidden" id="profileContainer">
+    <div class="glass-card profile-card">
+      <img id="profileAvatar" class="profile-avatar" src="https://placehold.co/200x200/1e293b/22c55e?text=User" onclick="document.getElementById('profileImageInput').click()">
+      <input type="file" id="profileImageInput" accept="image/*" style="display: none;">
+      <h2 id="profileName">اسم المستخدم</h2>
+      <p id="profileEmail">البريد الإلكتروني</p>
+      <input type="text" id="editNameInput" class="profile-input hidden" placeholder="الاسم الجديد">
+      <button id="editProfileBtn" class="edit-mode-btn" style="margin-bottom: 10px;">✏️ تعديل الاسم</button>
+      <button id="saveNameBtn" class="hidden" style="background: #22c55e; margin-bottom: 10px;">💾 حفظ التغييرات</button>
+      <button id="backToAppBtn" style="background: #475569;">🔙 العودة للتطبيق</button>
+    </div>
+  </div>
+
+  <!-- مودال إضافة/تعديل القناة -->
   <div class="modal hidden" id="radioModal">
     <div class="modal-content glass-card">
       <h2 id="modalTitle">➕ محطة جديدة</h2>
       <input type="text" id="radioName" placeholder="اسم المحطة *">
       <input type="text" id="radioUrl" placeholder="رابط البث *">
       <input type="text" id="radioCategory" placeholder="التصنيف">
-      <div class="image-upload-area" id="imageUploadArea" style="border:2px dashed rgba(255,255,255,0.3); border-radius:16px; padding:15px; text-align:center; cursor:pointer; margin-bottom:12px;">
+      <div class="image-upload-area" id="imageUploadArea">
         <i class="fas fa-cloud-upload-alt" style="font-size:28px;"></i>
         <p>اضغط لرفع صورة</p>
         <input type="file" id="radioImage" accept="image/*" style="display:none;">
       </div>
-      <div id="imagePreview" class="image-preview hidden" style="text-align:center; margin:10px 0;">
-        <img id="previewImg" style="width:100px; height:100px; border-radius:16px; object-fit:cover;">
+      <div id="imagePreview" class="image-preview hidden">
+        <img id="previewImg">
       </div>
       <div id="uploadProgress" class="hidden" style="text-align:center; margin:10px; color:#22c55e;">جاري الرفع...</div>
       <button id="saveRadioBtn" style="background:#22c55e;">💾 حفظ</button>
@@ -276,7 +309,6 @@
     audio.volume = 0.8;
     let unsubscribeRadios = null;
     let currentCloudinaryUrl = null;
-    let dragSourceIndex = null;
 
     function showToast(icon, title) {
       Swal.fire({ toast: true, position: 'top-end', icon, title, showConfirmButton: false, timer: 3000, background: '#1e293b', color: '#fff' });
@@ -302,7 +334,6 @@
       await db.collection('users').doc(currentUser.uid).collection('settings').doc('preferences').set({ order }, { merge: true });
     }
 
-    // تحميل محطات المستخدم فقط
     function listenToRadios() {
       if(unsubscribeRadios) unsubscribeRadios();
       if(!currentUser) return;
@@ -330,7 +361,6 @@
       });
     }
 
-    // تبديل المفضلة عند الضغط المزدوج
     async function toggleFavorite(id) {
       const station = radios.find(r => r.id == id);
       const newFav = !station.favorite;
@@ -338,7 +368,6 @@
       showToast('success', newFav ? 'أضيفت للمفضلة ❤️' : 'أزيلت من المفضلة 💔');
     }
 
-    // تشغيل المحطة (ضغطة واحدة)
     function playRadio(id) {
       const station = radios.find(r => r.id == id);
       if(!station) return;
@@ -352,7 +381,6 @@
       showToast('success', `🎵 تشغيل ${station.name}`);
     }
 
-    // فتح قائمة التعديل
     function openEditMenu(id) {
       Swal.fire({
         title: 'خيارات المحطة',
@@ -419,11 +447,9 @@
                onerror="this.src='https://placehold.co/400x300/1e293b/22c55e?text=Radio'"
                ondblclick="event.stopPropagation(); toggleFavorite('${radio.id}')">
           <h3>${escapeHtml(radio.name)}</h3>
-          <p>${escapeHtml(radio.category || 'عام')}</p>
         </div>
       `).join('');
       
-      // إضافة حدث النقر للتشغيل (ضغطة واحدة)
       document.querySelectorAll('.radio-card').forEach(card => {
         card.addEventListener('click', (e) => {
           if(!editMode && !e.target.closest('.menu-dots') && !e.target.closest('.drag-handle')) {
@@ -472,7 +498,38 @@
       });
     }
 
-    // المصادقة
+    // ========== إدارة الملف الشخصي ==========
+    async function loadProfile() {
+      if(!currentUser) return;
+      document.getElementById('profileName').innerText = currentUser.displayName || 'مستخدم';
+      document.getElementById('profileEmail').innerText = currentUser.email;
+      
+      // تحميل صورة الملف الشخصي من Firestore
+      const userDoc = await db.collection('users').doc(currentUser.uid).collection('settings').doc('profile').get();
+      if(userDoc.exists && userDoc.data().avatarUrl) {
+        document.getElementById('profileAvatar').src = userDoc.data().avatarUrl;
+      }
+    }
+
+    async function updateProfileName(newName) {
+      await currentUser.updateProfile({ displayName: newName });
+      await db.collection('users').doc(currentUser.uid).collection('settings').doc('profile').set({ name: newName }, { merge: true });
+      showToast('success', 'تم تحديث الاسم');
+      loadProfile();
+    }
+
+    async function updateProfileAvatar(file) {
+      try {
+        const url = await uploadToCloudinary(file);
+        await db.collection('users').doc(currentUser.uid).collection('settings').doc('profile').set({ avatarUrl: url }, { merge: true });
+        document.getElementById('profileAvatar').src = url;
+        showToast('success', 'تم تحديث الصورة الشخصية');
+      } catch(err) {
+        showToast('error', 'فشل رفع الصورة');
+      }
+    }
+
+    // ========== أحداث الصفحة ==========
     document.getElementById('registerBtn').onclick = async () => {
       const name = document.getElementById('registerName').value;
       const email = document.getElementById('registerEmail').value;
@@ -515,13 +572,21 @@
       document.getElementById('registerCard').classList.add('hidden');
       document.getElementById('loginCard').classList.remove('hidden');
     };
-    document.getElementById('logoutBtn').onclick = async () => {
-      await auth.signOut();
-      audio.pause();
-      document.getElementById('miniPlayer').classList.add('hidden');
+
+    // زر إضافة قناة
+    document.getElementById('addRadioBtn').onclick = () => {
+      editId = null;
+      document.getElementById('modalTitle').innerText = '➕ محطة جديدة';
+      document.getElementById('radioName').value = '';
+      document.getElementById('radioUrl').value = '';
+      document.getElementById('radioCategory').value = '';
+      currentCloudinaryUrl = null;
+      document.getElementById('imagePreview').classList.add('hidden');
+      document.getElementById('deleteFromModalBtn').classList.add('hidden');
+      document.getElementById('radioModal').classList.remove('hidden');
     };
 
-    // حفظ المحطة
+    // حفظ القناة
     document.getElementById('saveRadioBtn').onclick = async () => {
       const name = document.getElementById('radioName').value.trim();
       const streamUrl = document.getElementById('radioUrl').value.trim();
@@ -545,28 +610,16 @@
       }
       
       document.getElementById('radioModal').classList.add('hidden');
-      resetModal();
     };
 
     document.getElementById('deleteFromModalBtn').onclick = async () => {
       if(editId) {
         await deleteRadio(editId);
         document.getElementById('radioModal').classList.add('hidden');
-        resetModal();
       }
     };
 
-    function resetModal() {
-      editId = null;
-      document.getElementById('radioName').value = '';
-      document.getElementById('radioUrl').value = '';
-      document.getElementById('radioCategory').value = '';
-      currentCloudinaryUrl = null;
-      document.getElementById('imagePreview').classList.add('hidden');
-      document.getElementById('deleteFromModalBtn').classList.add('hidden');
-    }
-
-    // رفع الصورة
+    // رفع الصورة للقناة
     const imageUploadArea = document.getElementById('imageUploadArea');
     const imageInput = document.getElementById('radioImage');
     imageUploadArea.onclick = () => imageInput.click();
@@ -584,12 +637,49 @@
       document.getElementById('uploadProgress').classList.add('hidden');
     };
 
-    document.getElementById('addRadioBtn').onclick = () => {
-      resetModal();
-      document.getElementById('modalTitle').innerText = '➕ محطة جديدة';
-      document.getElementById('radioModal').classList.remove('hidden');
-    };
     document.getElementById('closeModalBtn').onclick = () => document.getElementById('radioModal').classList.add('hidden');
+
+    // زر الملف الشخصي
+    document.getElementById('profileBtn').onclick = async () => {
+      await loadProfile();
+      document.getElementById('app').classList.add('hidden');
+      document.getElementById('profileContainer').classList.remove('hidden');
+    };
+
+    document.getElementById('backToAppBtn').onclick = () => {
+      document.getElementById('profileContainer').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+    };
+
+    // تعديل الاسم
+    document.getElementById('editProfileBtn').onclick = () => {
+      document.getElementById('editNameInput').classList.remove('hidden');
+      document.getElementById('editNameInput').value = currentUser.displayName || '';
+      document.getElementById('editProfileBtn').classList.add('hidden');
+      document.getElementById('saveNameBtn').classList.remove('hidden');
+    };
+
+    document.getElementById('saveNameBtn').onclick = async () => {
+      const newName = document.getElementById('editNameInput').value.trim();
+      if(newName) {
+        await updateProfileName(newName);
+        document.getElementById('editNameInput').classList.add('hidden');
+        document.getElementById('editProfileBtn').classList.remove('hidden');
+        document.getElementById('saveNameBtn').classList.add('hidden');
+      }
+    };
+
+    // رفع الصورة الشخصية
+    document.getElementById('profileImageInput').onchange = async (e) => {
+      const file = e.target.files[0];
+      if(file) await updateProfileAvatar(file);
+    };
+
+    document.getElementById('logoutBtn').onclick = async () => {
+      await auth.signOut();
+      audio.pause();
+      document.getElementById('miniPlayer').classList.add('hidden');
+    };
 
     // تبديل وضع الترتيب
     document.getElementById('toggleEditModeBtn').onclick = () => {
@@ -641,7 +731,6 @@
       });
     };
 
-    // الفلتر
     document.querySelectorAll('.menu-item').forEach(item => {
       item.onclick = () => {
         document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
@@ -659,7 +748,9 @@
         currentUser = user;
         document.getElementById('authContainer').classList.add('hidden');
         document.getElementById('app').classList.remove('hidden');
+        document.getElementById('profileContainer').classList.add('hidden');
         listenToRadios();
+        loadProfile();
         hideSplash();
       } else if(user && !user.emailVerified) {
         auth.signOut();
@@ -670,6 +761,7 @@
       } else {
         currentUser = null;
         document.getElementById('app').classList.add('hidden');
+        document.getElementById('profileContainer').classList.add('hidden');
         document.getElementById('authContainer').classList.remove('hidden');
         document.getElementById('miniPlayer').classList.add('hidden');
         audio.pause();
