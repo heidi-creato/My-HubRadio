@@ -64,13 +64,11 @@
     .topbar { margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
     .topbar h2 { background: linear-gradient(135deg, #22c55e, #3b82f6); -webkit-background-clip: text; background-clip: text; color: transparent; }
     
-    /* خيارات العرض */
     .view-options { display: flex; gap: 10px; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 50px; }
     .view-btn { background: transparent; border: none; padding: 8px 16px; border-radius: 30px; color: white; cursor: pointer; transition: all 0.2s; }
     .view-btn.active { background: #22c55e; }
     .edit-mode-btn { background: #f59e0b !important; color: white !important; }
     
-    /* شبكة القنوات - حجم أصغر */
     .radio-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
     .radio-card { position: relative; padding: 12px; transition: all 0.2s; cursor: pointer; border-radius: 20px; background: rgba(255,255,255,0.03); }
     .radio-card.edit-mode { cursor: grab; }
@@ -79,9 +77,7 @@
     .radio-card img { width: 100%; height: 130px; object-fit: cover; border-radius: 16px; margin-bottom: 10px; background: #1e293b; transition: transform 0.2s; }
     .radio-card:hover img { transform: scale(1.02); }
     .radio-card h3 { font-size: 13px; margin-bottom: 4px; text-align: center; }
-    .radio-card p { font-size: 11px; color: rgba(255,255,255,0.6); text-align: center; display: none; }
     
-    /* زر القائمة الثلاثية */
     .menu-dots {
       position: absolute;
       top: 8px;
@@ -99,9 +95,6 @@
       transition: all 0.2s;
     }
     .menu-dots:hover { background: #22c55e; transform: scale(1.05); }
-    .menu-dots i { color: white; font-size: 14px; }
-    
-    /* مؤشر السحب */
     .drag-handle {
       position: absolute;
       top: 8px;
@@ -116,10 +109,7 @@
       cursor: grab;
       z-index: 10;
     }
-    .drag-handle:active { cursor: grabbing; }
-    .drag-handle i { color: white; font-size: 14px; }
     
-    /* عرض عمودي */
     .vertical-view .radio-grid { display: flex; flex-direction: column; gap: 10px; }
     .vertical-view .radio-card { display: flex; align-items: center; gap: 15px; padding: 10px; }
     .vertical-view .radio-card img { width: 55px; height: 55px; margin: 0; border-radius: 12px; }
@@ -127,7 +117,6 @@
     .vertical-view .menu-dots { position: static; margin-right: auto; width: 28px; height: 28px; }
     .vertical-view .drag-handle { position: static; margin-left: auto; width: 28px; height: 28px; }
     
-    /* عرض دائري */
     .circle-view .radio-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
     .circle-view .radio-card { text-align: center; width: 90px; padding: 8px; }
     .circle-view .radio-card img { width: 70px; height: 70px; border-radius: 50%; margin: 0 auto 8px; border: 3px solid #22c55e; }
@@ -135,7 +124,6 @@
     .circle-view .menu-dots { top: 3px; right: 3px; width: 24px; height: 24px; }
     .circle-view .drag-handle { top: 3px; left: 3px; width: 24px; height: 24px; }
     
-    /* صفحة الملف الشخصي */
     .profile-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
     .profile-card { width: 100%; max-width: 500px; padding: 40px; text-align: center; }
     .profile-avatar {
@@ -153,7 +141,6 @@
     .profile-card p { color: rgba(255,255,255,0.7); margin-bottom: 30px; }
     .profile-input { width: 100%; padding: 12px; margin-bottom: 15px; background: rgba(255,255,255,0.1); border: none; border-radius: 12px; color: white; text-align: center; font-size: 16px; }
     
-    /* مشغل الصوت */
     .mini-player { position: fixed; bottom: 0; left: 0; right: 0; height: 65px; background: rgba(15,23,42,0.98); backdrop-filter: blur(20px); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-top: 1px solid rgba(255,255,255,0.1); z-index: 1000; }
     .player-left { display: flex; align-items: center; gap: 12px; }
     .player-left img { width: 45px; height: 45px; border-radius: 10px; object-fit: cover; }
@@ -241,7 +228,6 @@
     </main>
   </div>
 
-  <!-- صفحة الملف الشخصي -->
   <div class="profile-container hidden" id="profileContainer">
     <div class="glass-card profile-card">
       <img id="profileAvatar" class="profile-avatar" src="https://placehold.co/200x200/1e293b/22c55e?text=User" onclick="document.getElementById('profileImageInput').click()">
@@ -255,7 +241,6 @@
     </div>
   </div>
 
-  <!-- مودال إضافة المحطات -->
   <div class="modal hidden" id="radioModal">
     <div class="modal-content glass-card">
       <h2 id="modalTitle">➕ محطة راديو جديدة</h2>
@@ -353,7 +338,7 @@
       return str.replace(/[&<>]/g, function(m) { if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m; });
     }
 
-    // رفع الصورة إلى Cloudinary (نفس الكود الذي يعمل)
+    // رفع الصورة إلى Cloudinary
     async function uploadToCloudinary(file) {
       return new Promise((resolve, reject) => {
         const formData = new FormData();
@@ -376,7 +361,7 @@
             const response = JSON.parse(xhr.responseText);
             resolve(response.secure_url);
           } else {
-            reject(new Error('فشل رفع الصورة'));
+            reject(new Error('فشل رفع الصورة - كود: ' + xhr.status));
           }
         };
         
@@ -385,11 +370,13 @@
       });
     }
 
-    // حفظ ترتيب القنوات للمستخدم
+    // حفظ ترتيب القنوات
     async function saveOrder() {
       if(!currentUser || radios.length === 0) return;
       const order = radios.map(r => r.id);
-      await db.collection('users').doc(currentUser.uid).collection('settings').doc('preferences').set({ order }, { merge: true });
+      try {
+        await db.collection('users').doc(currentUser.uid).collection('settings').doc('preferences').set({ order }, { merge: true });
+      } catch(e) { console.error('خطأ في حفظ الترتيب:', e); }
     }
 
     // الاستماع للمحطات (كل مستخدم يرى محطاته فقط)
@@ -397,11 +384,19 @@
       if(unsubscribeRadios) unsubscribeRadios();
       if(!currentUser) return;
       
+      console.log('بدء الاستماع للمحطات للمستخدم:', currentUser.uid);
+      
       unsubscribeRadios = db.collection('users').doc(currentUser.uid).collection('radios')
         .orderBy('createdAt', 'desc')
         .onSnapshot(async (snapshot) => {
-          const settingsDoc = await db.collection('users').doc(currentUser.uid).collection('settings').doc('preferences').get();
-          const savedOrder = settingsDoc.exists ? settingsDoc.data().order : [];
+          console.log('تم استلام البيانات، عدد المحطات:', snapshot.size);
+          
+          // جلب الترتيب المحفوظ
+          let savedOrder = [];
+          try {
+            const settingsDoc = await db.collection('users').doc(currentUser.uid).collection('settings').doc('preferences').get();
+            savedOrder = settingsDoc.exists ? settingsDoc.data().order : [];
+          } catch(e) { console.error('خطأ في جلب الترتيب:', e); }
           
           radios = [];
           snapshot.forEach(docSnap => {
@@ -409,6 +404,7 @@
             radios.push({ id: docSnap.id, ...data, favorite: data.favorite || false });
           });
           
+          // تطبيق الترتيب المحفوظ
           if(savedOrder && savedOrder.length && radios.length) {
             radios.sort((a,b) => {
               const ia = savedOrder.indexOf(a.id);
@@ -423,8 +419,8 @@
           updateLoadingStatus('جاهز', false);
           hideSplash();
         }, (error) => {
-          console.error(error);
-          showToast('error', 'خطأ في تحميل المحطات');
+          console.error('خطأ في الاستماع للمحطات:', error);
+          showToast('error', 'خطأ في تحميل المحطات: ' + error.message);
           updateLoadingStatus('خطأ في الاتصال', true);
         });
     }
@@ -438,7 +434,7 @@
         if(currentFilter === 'favorites') {
           grid.innerHTML = '<div class="empty-state"><i class="far fa-heart" style="font-size:48px"></i><h3>لا توجد محطات مفضلة</h3><p>اضغط مرتين على صورة المحطة لإضافتها للمفضلة</p></div>';
         } else {
-          grid.innerHTML = '<div class="empty-state"><i class="fas fa-radio" style="font-size:48px"></i><h3>لا توجد محطات</h3><p>أضف محطتك الأولى الآن</p></div>';
+          grid.innerHTML = '<div class="empty-state"><i class="fas fa-radio" style="font-size:48px"></i><h3>مرحباً بك في راديو نجوم</h3><p>اضغط على زر "إضافة محطة" لإضافة أول محطة راديو</p></div>';
         }
         return;
       }
@@ -453,11 +449,10 @@
                onerror="this.src='https://placehold.co/400x300/1e293b/22c55e?text=Radio'"
                ondblclick="event.stopPropagation(); toggleFavorite('${radio.id}')">
           <h3>${escapeHtml(radio.name)}</h3>
-          <p>${escapeHtml(radio.category || 'عام')}</p>
         </div>
       `).join('');
       
-      // إضافة حدث النقر للتشغيل (ضغطة واحدة)
+      // إضافة حدث النقر للتشغيل
       document.querySelectorAll('.radio-card').forEach(card => {
         card.addEventListener('click', (e) => {
           if(!editMode && !e.target.closest('.menu-dots') && !e.target.closest('.drag-handle')) {
@@ -513,16 +508,21 @@
       });
     }
 
-    // تبديل المفضلة (ضغط مزدوج)
+    // تبديل المفضلة
     window.toggleFavorite = async function(id) {
+      if(!currentUser) return;
       const station = radios.find(r => r.id == id);
       if(!station) return;
       const newFav = !station.favorite;
-      await db.collection('users').doc(currentUser.uid).collection('radios').doc(id).update({ favorite: newFav });
-      showToast('success', newFav ? '❤️ أضيفت إلى المفضلة' : '💔 أزيلت من المفضلة');
+      try {
+        await db.collection('users').doc(currentUser.uid).collection('radios').doc(id).update({ favorite: newFav });
+        showToast('success', newFav ? '❤️ أضيفت إلى المفضلة' : '💔 أزيلت من المفضلة');
+      } catch(e) {
+        showToast('error', 'حدث خطأ');
+      }
     };
 
-    // تشغيل المحطة (ضغطة واحدة)
+    // تشغيل المحطة
     window.playRadio = function(id) {
       const station = radios.find(r => r.id == id);
       if(!station) return;
@@ -536,7 +536,7 @@
       showToast('success', `🎵 تشغيل ${station.name}`);
     };
 
-    // قائمة الخيارات (ثلاث نقاط)
+    // قائمة الخيارات
     window.openEditMenu = function(id) {
       Swal.fire({
         title: 'خيارات المحطة',
@@ -560,15 +560,20 @@
     window.deleteRadio = async function(id) {
       const result = await Swal.fire({ title: 'حذف المحطة؟', text: 'لا يمكن التراجع', icon: 'warning', showCancelButton: true, confirmButtonText: 'نعم', cancelButtonText: 'إلغاء' });
       if(result.isConfirmed) {
-        await db.collection('users').doc(currentUser.uid).collection('radios').doc(id).delete();
-        showToast('success', 'تم الحذف');
-        if(currentPlayingId == id) { audio.pause(); document.getElementById('miniPlayer').classList.add('hidden'); }
+        try {
+          await db.collection('users').doc(currentUser.uid).collection('radios').doc(id).delete();
+          showToast('success', 'تم الحذف');
+          if(currentPlayingId == id) { audio.pause(); document.getElementById('miniPlayer').classList.add('hidden'); }
+        } catch(e) {
+          showToast('error', 'حدث خطأ أثناء الحذف');
+        }
       }
     };
 
     // تعديل المحطة
     window.editRadio = async function(id) {
       const radio = radios.find(r => r.id == id);
+      if(!radio) return;
       editId = id;
       document.getElementById('modalTitle').innerText = '✏️ تعديل المحطة';
       document.getElementById('radioName').value = radio.name;
@@ -586,13 +591,14 @@
       document.getElementById('radioModal').classList.remove('hidden');
     };
 
-    // ========== المصادقة مع تأكيد البريد ==========
+    // ========== المصادقة ==========
     document.getElementById('registerBtn').onclick = async () => {
       const name = document.getElementById('registerName').value;
       const email = document.getElementById('registerEmail').value;
       const password = document.getElementById('registerPassword').value;
       const confirm = document.getElementById('registerConfirmPassword').value;
       if(password !== confirm) return showToast('error', 'كلمتا المرور غير متطابقتين');
+      if(!name || !email || !password) return showToast('error', 'يرجى ملء جميع الحقول');
       try {
         const userCred = await auth.createUserWithEmailAndPassword(email, password);
         await userCred.user.updateProfile({ displayName: name });
@@ -607,6 +613,7 @@
     document.getElementById('loginBtn').onclick = async () => {
       const email = document.getElementById('loginEmail').value;
       const password = document.getElementById('loginPassword').value;
+      if(!email || !password) return showToast('error', 'يرجى إدخال البريد وكلمة المرور');
       try {
         const userCred = await auth.signInWithEmailAndPassword(email, password);
         if(!userCred.user.emailVerified) {
@@ -639,11 +646,13 @@
       document.getElementById('miniPlayer').classList.add('hidden');
     };
 
-    // ========== رفع الصورة (نفس الكود الذي يعمل) ==========
+    // ========== رفع الصورة ==========
     const imageUploadArea = document.getElementById('imageUploadArea');
     const imageInput = document.getElementById('radioImage');
     
-    imageUploadArea.onclick = () => imageInput.click();
+    if(imageUploadArea) {
+      imageUploadArea.onclick = () => imageInput.click();
+    }
     
     imageInput.onchange = async (e) => {
       const file = e.target.files[0];
@@ -659,6 +668,7 @@
         return;
       }
       
+      // معاينة الصورة
       const reader = new FileReader();
       reader.onload = (ev) => {
         document.getElementById('imagePreview').classList.remove('hidden');
@@ -666,6 +676,7 @@
       };
       reader.readAsDataURL(file);
       
+      // رفع الصورة
       document.getElementById('uploadProgress').classList.remove('hidden');
       
       try {
@@ -677,7 +688,7 @@
       } catch(error) {
         console.error(error);
         document.getElementById('uploadProgress').classList.add('hidden');
-        showToast('error', 'فشل رفع الصورة، تأكد من إعدادات Cloudinary');
+        showToast('error', 'فشل رفع الصورة: ' + error.message);
         document.getElementById('imagePreview').classList.add('hidden');
         currentCloudinaryUrl = null;
       }
@@ -685,6 +696,11 @@
 
     // حفظ المحطة (إضافة أو تعديل)
     document.getElementById('saveRadioBtn').onclick = async () => {
+      if(!currentUser) {
+        showToast('error', 'يرجى تسجيل الدخول أولاً');
+        return;
+      }
+      
       const name = document.getElementById('radioName').value.trim();
       const streamUrl = document.getElementById('radioUrl').value.trim();
       if(!name || !streamUrl) return showToast('warning', 'الاسم ورابط البث مطلوبة');
@@ -692,23 +708,43 @@
       const imageUrl = currentCloudinaryUrl || null;
       const category = document.getElementById('radioCategory').value.trim() || 'عام';
       
-      const data = {
-        name, streamUrl, category, imageUrl,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      };
+      // تعطيل الزر لمنع الضغط المتكرر
+      const saveBtn = document.getElementById('saveRadioBtn');
+      saveBtn.disabled = true;
+      saveBtn.innerText = '⏳ جاري الحفظ...';
       
-      if(editId) {
-        await db.collection('users').doc(currentUser.uid).collection('radios').doc(editId).update(data);
-        showToast('success', 'تم تعديل المحطة');
-      } else {
-        data.favorite = false;
-        data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-        await db.collection('users').doc(currentUser.uid).collection('radios').add(data);
-        showToast('success', 'تمت إضافة المحطة');
+      try {
+        const data = {
+          name: name,
+          streamUrl: streamUrl,
+          category: category,
+          imageUrl: imageUrl,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        if(editId) {
+          // تعديل محطة موجودة
+          await db.collection('users').doc(currentUser.uid).collection('radios').doc(editId).update(data);
+          showToast('success', '✓ تم تعديل المحطة بنجاح');
+        } else {
+          // إضافة محطة جديدة
+          data.favorite = false;
+          data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+          await db.collection('users').doc(currentUser.uid).collection('radios').add(data);
+          showToast('success', '✓ تم إضافة المحطة بنجاح');
+        }
+        
+        // إغلاق النافذة وإعادة تعيين الحقول
+        document.getElementById('radioModal').classList.add('hidden');
+        resetModalForm();
+        
+      } catch(error) {
+        console.error('خطأ في حفظ المحطة:', error);
+        showToast('error', 'حدث خطأ أثناء حفظ المحطة: ' + error.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerText = '💾 حفظ المحطة';
       }
-      
-      document.getElementById('radioModal').classList.add('hidden');
-      resetModalForm();
     };
 
     document.getElementById('deleteFromModalBtn').onclick = async () => {
@@ -747,10 +783,12 @@
       document.getElementById('profileName').innerText = currentUser.displayName || 'مستخدم';
       document.getElementById('profileEmail').innerText = currentUser.email;
       
-      const userDoc = await db.collection('users').doc(currentUser.uid).collection('settings').doc('profile').get();
-      if(userDoc.exists && userDoc.data().avatarUrl) {
-        document.getElementById('profileAvatar').src = userDoc.data().avatarUrl;
-      }
+      try {
+        const userDoc = await db.collection('users').doc(currentUser.uid).collection('settings').doc('profile').get();
+        if(userDoc.exists && userDoc.data().avatarUrl) {
+          document.getElementById('profileAvatar').src = userDoc.data().avatarUrl;
+        }
+      } catch(e) { console.error('خطأ في تحميل الملف الشخصي:', e); }
     }
 
     async function updateProfileName(newName) {
@@ -878,7 +916,9 @@
     });
 
     // مراقبة حالة المصادقة
-    auth.onAuthStateChanged((user) => {
+    auth.onAuthStateChanged(async (user) => {
+      console.log('حالة المصادقة:', user ? (user.emailVerified ? 'مفعل' : 'غير مفعل') : 'لا يوجد مستخدم');
+      
       if(user && user.emailVerified) {
         currentUser = user;
         document.getElementById('authContainer').classList.add('hidden');
@@ -889,7 +929,7 @@
         showToast('success', `مرحباً ${user.displayName || user.email}`);
         hideSplash();
       } else if(user && !user.emailVerified) {
-        auth.signOut();
+        await auth.signOut();
         document.getElementById('authContainer').classList.remove('hidden');
         document.getElementById('app').classList.add('hidden');
         hideSplash();
@@ -902,7 +942,7 @@
         document.getElementById('profileContainer').classList.add('hidden');
         document.getElementById('authContainer').classList.remove('hidden');
         document.getElementById('miniPlayer').classList.add('hidden');
-        audio.pause();
+        if(audio) audio.pause();
         hideSplash();
       }
     });
