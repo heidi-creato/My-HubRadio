@@ -16,7 +16,6 @@
     
     /* ========== الثيمات ========== */
     :root {
-      /* Light Mode */
       --bg-primary: linear-gradient(135deg, #f5f7fa 0%, #eef2f7 100%);
       --bg-card: white;
       --text-primary: #1e293b;
@@ -26,9 +25,9 @@
       --shadow-hover: 0 12px 24px -12px rgba(0,0,0,0.15);
       --nav-bg: rgba(255,255,255,0.95);
       --input-bg: #f8fafc;
-      --input-border: #e2e8f0;
       --toast-bg: #1e293b;
       --toast-text: white;
+      --player-bg: rgba(255,255,255,0.98);
     }
     
     body.dark {
@@ -41,15 +40,16 @@
       --shadow-hover: 0 12px 24px -12px rgba(0,0,0,0.4);
       --nav-bg: rgba(15,23,42,0.95);
       --input-bg: #334155;
-      --input-border: #475569;
       --toast-bg: #f1f5f9;
       --toast-text: #1e293b;
+      --player-bg: rgba(30,41,59,0.98);
     }
     
     body {
       background: var(--bg-primary);
       color: var(--text-primary);
       min-height: 100vh;
+      padding-bottom: 60px;
       transition: background 0.3s ease, color 0.3s ease;
     }
     
@@ -341,57 +341,102 @@
       margin-bottom: 12px;
     }
     
-    /* شريط التشغيل السفلي */
+    /* ========== شريط التشغيل السفلي الأنيق ========== */
     .mini-player {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      background: var(--bg-card);
+      background: var(--player-bg);
+      backdrop-filter: blur(20px);
       border-top: 1px solid var(--border);
+      padding: 8px 24px;
+      z-index: 100;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 8px 20px;
-      z-index: 100;
-      transform: translateY(0);
-      transition: transform 0.3s ease;
+      justify-content: center;
+      gap: 24px;
+      transition: all 0.3s ease;
     }
-    .mini-player.hide { transform: translateY(100%); }
-    .player-left img { width: 40px; height: 40px; border-radius: 12px; object-fit: cover; }
+    .player-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      object-fit: cover;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .player-controls {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
     .player-controls button {
-      background: var(--input-bg);
-      border: 1px solid var(--border);
-      width: 36px;
-      height: 36px;
+      background: transparent;
+      border: none;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       cursor: pointer;
-      margin: 0 5px;
+      font-size: 1.2rem;
       color: var(--text-primary);
-    }
-    .player-controls button:hover { background: #22c55e; color: white; }
-    .hide-player-btn {
-      background: var(--input-bg);
-      border: 1px solid var(--border);
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      cursor: pointer;
+      transition: all 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
     }
+    .player-controls button:hover {
+      background: rgba(34,197,94,0.15);
+      transform: scale(1.05);
+    }
+    .player-controls button.primary {
+      background: #22c55e;
+      color: white;
+    }
+    .player-controls button.primary:hover {
+      background: #16a34a;
+      transform: scale(1.05);
+    }
+    .volume-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .volume-control i {
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+    .volume-control i:hover { color: #22c55e; }
+    .volume-slider {
+      width: 100px;
+      height: 4px;
+      border-radius: 4px;
+      background: var(--border);
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+    .volume-slider:focus { outline: none; }
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #22c55e;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .volume-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
     
-    /* Toast مخصص */
+    /* Toast أنيق */
     .custom-toast {
       position: fixed;
-      bottom: 90px;
+      bottom: 70px;
       left: 50%;
       transform: translateX(-50%) translateY(20px);
       background: var(--toast-bg);
       color: var(--toast-text);
-      padding: 10px 20px;
-      border-radius: 50px;
+      padding: 8px 20px;
+      border-radius: 40px;
       font-size: 13px;
       font-weight: 500;
       z-index: 1000;
@@ -515,6 +560,8 @@
     @media (max-width: 640px) {
       .radio-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
       .top-nav { padding: 10px 16px; }
+      .mini-player { padding: 6px 16px; gap: 12px; }
+      .volume-slider { width: 70px; }
     }
   </style>
 </head>
@@ -603,17 +650,17 @@
   </div>
 </div>
 
-<!-- شريط التشغيل السفلي -->
+<!-- ========== شريط التشغيل السفلي الأنيق ========== -->
 <div class="mini-player hidden" id="miniPlayer">
-  <div class="player-left"><img id="playerImage" src="https://placehold.co/50x50"><div><h4 id="playerTitle" style="font-size:13px;">لا توجد محطة</h4></div></div>
+  <img id="playerAvatar" class="player-avatar" src="https://placehold.co/50x50">
   <div class="player-controls">
-    <button id="prevBtn">⏮</button>
-    <button id="playPauseBtn">▶</button>
-    <button id="nextBtn">⏭</button>
+    <button id="prevBtn"><i class="fas fa-step-backward"></i></button>
+    <button id="playPauseBtn" class="primary"><i class="fas fa-play"></i></button>
+    <button id="nextBtn"><i class="fas fa-step-forward"></i></button>
   </div>
-  <div class="volume-wrapper" style="display:flex; align-items:center; gap:8px;">
-    🔊 <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.8" style="width:80px;">
-    <button class="hide-player-btn" id="hidePlayerBtn"><i class="fas fa-chevron-down"></i></button>
+  <div class="volume-control">
+    <i id="muteBtn" class="fas fa-volume-up"></i>
+    <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.01" value="0.8">
   </div>
 </div>
 
@@ -638,17 +685,17 @@
 
   // ========== متغيرات عامة ==========
   let currentUser = null, radios = [], currentFilter = 'all', currentPlayingId = null, currentView = 'grid', editId = null, editMode = false;
-  let audio = new Audio(); audio.volume = 0.8;
+  let audio = new Audio();
   let unsubscribeRadios = null;
   let currentCloudinaryUrl = null, currentImageFile = null;
-  let isPlayerHidden = false;
+  let isMuted = false;
 
   // ========== Toast أنيق ==========
-  function showToast(message, icon = 'success') {
+  function showToast(message) {
     const toast = document.getElementById('customToast');
-    toast.innerText = icon === 'success' ? '✓ ' + message : '⚠️ ' + message;
+    toast.innerText = message;
     toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 2500);
+    setTimeout(() => toast.classList.remove('show'), 2000);
   }
 
   // ========== الثيم ==========
@@ -742,7 +789,7 @@
             radios.splice(toIdx,0,moved);
             renderRadios();
             await saveOrder();
-            showToast('تم تحديث الترتيب', 'success');
+            showToast('✓ تم تحديث الترتيب');
           }
         }
       });
@@ -753,35 +800,37 @@
     const station=radios.find(r=>r.id==id);
     const newFav=!station.favorite;
     await db.collection('users').doc(currentUser.uid).collection('radios').doc(id).update({favorite:newFav});
-    showToast(newFav?'❤️ أضيفت للمفضلة':'💔 أزيلت من المفضلة', 'success');
+    showToast(newFav?'❤️ أضيفت للمفضلة':'💔 أزيلت من المفضلة');
   };
+  
   window.playRadio=(id)=>{
     const station=radios.find(r=>r.id==id);
     if(!station) return;
     currentPlayingId=id;
     audio.src=station.streamUrl;
-    audio.play().catch(()=>showToast('لا يمكن التشغيل', 'error'));
+    audio.play().catch(()=>showToast('⚠️ لا يمكن تشغيل البث'));
     document.getElementById('miniPlayer').classList.remove('hidden');
-    document.getElementById('playerTitle').innerText=station.name;
-    document.getElementById('playerImage').src=station.imageUrl||'https://placehold.co/50x50';
-    document.getElementById('playPauseBtn').innerHTML='⏸';
-    if(isPlayerHidden) document.getElementById('miniPlayer').classList.remove('hide');
-    showToast(`🎵 تشغيل ${station.name}`, 'success');
+    document.getElementById('playerAvatar').src=station.imageUrl||'https://placehold.co/50x50';
+    document.getElementById('playPauseBtn').innerHTML='<i class="fas fa-pause"></i>';
+    showToast(`🎵 تشغيل ${station.name}`);
   };
+  
   window.openEditMenu=async(id)=>{
     document.getElementById('userDropdown').classList.add('hidden');
     const res=await Swal.fire({title:'خيارات',showCancelButton:true,confirmButtonText:'✏️ تعديل',denyButtonText:'🗑️ حذف',showDenyButton:true});
     if(res.isConfirmed) editRadio(id);
     else if(res.isDenied) deleteRadio(id);
   };
+  
   window.deleteRadio=async(id)=>{
     const conf=await Swal.fire({title:'حذف؟',icon:'warning',showCancelButton:true});
     if(conf.isConfirmed){
       await db.collection('users').doc(currentUser.uid).collection('radios').doc(id).delete();
       if(currentPlayingId==id){ audio.pause(); document.getElementById('miniPlayer').classList.add('hidden');}
-      showToast('تم الحذف', 'success');
+      showToast('✓ تم الحذف');
     }
   };
+  
   window.editRadio=async(id)=>{
     const radio=radios.find(r=>r.id==id);
     editId=id;
@@ -801,30 +850,33 @@
 
   // ========== أحداث الواجهة ==========
   document.getElementById('themeToggle').onclick = toggleTheme;
+  
   document.getElementById('registerBtn').onclick=async()=>{
     const name=document.getElementById('registerName').value, email=document.getElementById('registerEmail').value, pwd=document.getElementById('registerPassword').value, conf=document.getElementById('registerConfirmPassword').value;
-    if(pwd!==conf) return showToast('كلمة المرور غير متطابقة', 'error');
+    if(pwd!==conf) return showToast('⚠️ كلمة المرور غير متطابقة');
     try{
       const uc=await auth.createUserWithEmailAndPassword(email,pwd);
       await uc.user.updateProfile({displayName:name});
       await uc.user.sendEmailVerification();
-      showToast('تم التسجيل! راجع بريدك لتفعيل الحساب', 'success');
+      showToast('✓ تم التسجيل! راجع بريدك لتفعيل الحساب');
       await auth.signOut();
       document.getElementById('registerCard').classList.add('hidden');
       document.getElementById('loginCard').classList.remove('hidden');
-    }catch(e){ showToast(e.message, 'error'); }
+    }catch(e){ showToast('⚠️ '+e.message); }
   };
+  
   document.getElementById('loginBtn').onclick=async()=>{
     const email=document.getElementById('loginEmail').value, pwd=document.getElementById('loginPassword').value;
     try{
       const uc=await auth.signInWithEmailAndPassword(email,pwd);
-      if(!uc.user.emailVerified){ await auth.signOut(); showToast('يرجى تأكيد البريد', 'error'); }
-    }catch(e){ showToast('بيانات غير صحيحة', 'error'); }
+      if(!uc.user.emailVerified){ await auth.signOut(); showToast('⚠️ يرجى تأكيد البريد الإلكتروني'); }
+    }catch(e){ showToast('⚠️ بيانات غير صحيحة'); }
   };
-  document.getElementById('googleLoginBtn').onclick=async()=>{ try{ await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }catch(e){ showToast(e.message, 'error'); } };
+  
+  document.getElementById('googleLoginBtn').onclick=async()=>{ try{ await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }catch(e){ showToast('⚠️ '+e.message); } };
   document.getElementById('showRegister').onclick=()=>{ document.getElementById('loginCard').classList.add('hidden'); document.getElementById('registerCard').classList.remove('hidden'); };
   document.getElementById('showLogin').onclick=()=>{ document.getElementById('registerCard').classList.add('hidden'); document.getElementById('loginCard').classList.remove('hidden'); };
-  document.getElementById('logoutBtn').onclick=async()=>{ await auth.signOut(); audio.pause(); document.getElementById('miniPlayer').classList.add('hidden'); showToast('تم تسجيل الخروج', 'success'); };
+  document.getElementById('logoutBtn').onclick=async()=>{ await auth.signOut(); audio.pause(); document.getElementById('miniPlayer').classList.add('hidden'); showToast('✓ تم تسجيل الخروج'); };
 
   // بحث
   const searchBtn = document.getElementById('searchBtn');
@@ -854,21 +906,23 @@
     document.getElementById('deleteFromModalBtn').classList.add('hidden');
     document.getElementById('radioModal').classList.remove('hidden');
   };
+  
   document.getElementById('saveRadioBtn').onclick=async()=>{
     const name=document.getElementById('radioName').value.trim(), url=document.getElementById('radioUrl').value.trim();
-    if(!name || !url) return showToast('املأ الحقول', 'error');
+    if(!name || !url) return showToast('⚠️ املأ الحقول');
     let img=currentCloudinaryUrl;
     if(currentImageFile){
       document.getElementById('uploadProgress').classList.remove('hidden');
-      try{ img = await uploadToCloudinary(currentImageFile); }catch(e){ document.getElementById('uploadProgress').classList.add('hidden'); showToast('فشل رفع الصورة', 'error'); return; }
+      try{ img = await uploadToCloudinary(currentImageFile); }catch(e){ document.getElementById('uploadProgress').classList.add('hidden'); showToast('⚠️ فشل رفع الصورة'); return; }
       document.getElementById('uploadProgress').classList.add('hidden');
     }
     const data={ name, streamUrl:url, category:document.getElementById('radioCategory').value.trim()||'عام', imageUrl:img, updatedAt:firebase.firestore.FieldValue.serverTimestamp() };
     if(editId) await db.collection('users').doc(currentUser.uid).collection('radios').doc(editId).update(data);
     else { data.favorite=false; data.createdAt=firebase.firestore.FieldValue.serverTimestamp(); await db.collection('users').doc(currentUser.uid).collection('radios').add(data); }
-    showToast(editId?'تم التعديل':'تمت الإضافة', 'success');
+    showToast(editId?'✓ تم التعديل':'✓ تمت الإضافة');
     document.getElementById('radioModal').classList.add('hidden');
   };
+  
   document.getElementById('deleteFromModalBtn').onclick=async()=>{ if(editId){ await window.deleteRadio(editId); document.getElementById('radioModal').classList.add('hidden'); } };
   document.getElementById('closeModalBtn').onclick=()=>document.getElementById('radioModal').classList.add('hidden');
 
@@ -882,7 +936,7 @@
       const reader=new FileReader();
       reader.onload=ev=>{ document.getElementById('imagePreview').classList.remove('hidden'); document.getElementById('previewImg').src=ev.target.result; };
       reader.readAsDataURL(file);
-    }else showToast('صورة فقط وحتى 5MB', 'error');
+    }else showToast('⚠️ صورة فقط وحتى 5MB');
   };
 
   // قائمة المستخدم
@@ -895,6 +949,7 @@
   document.addEventListener('click',(e)=>{
     if(!profileTrigger.contains(e.target) && !userDropdown.contains(e.target)) userDropdown.classList.add('hidden');
   });
+  
   async function updateDropdown(){
     if(!currentUser) return;
     document.getElementById('dropdownName').innerText=currentUser.displayName||'مستخدم';
@@ -902,6 +957,7 @@
     const profileDoc = await db.collection('users').doc(currentUser.uid).collection('settings').doc('profile').get();
     if(profileDoc.exists && profileDoc.data().avatarUrl) document.getElementById('dropdownAvatar').src=profileDoc.data().avatarUrl;
   }
+  
   document.querySelectorAll('.dropdown-item[data-nav]').forEach(item=>{
     item.onclick=()=>{
       currentFilter=item.dataset.nav;
@@ -909,13 +965,14 @@
       userDropdown.classList.add('hidden');
     };
   });
+  
   document.getElementById('editModeDropdown').onclick=()=>{
     editMode=!editMode;
     const btn=document.getElementById('editModeDropdown');
     btn.innerHTML = editMode ? '<i class="fas fa-check"></i> <span>إنهاء الترتيب</span>' : '<i class="fas fa-arrows-alt"></i> <span>وضع الترتيب</span>';
     renderRadios();
     userDropdown.classList.add('hidden');
-    showToast(editMode?'اسحب القنوات لإعادة الترتيب':'تم الخروج من وضع الترتيب', 'success');
+    showToast(editMode?'اسحب القنوات لإعادة الترتيب':'تم الخروج من وضع الترتيب');
   };
 
   // أزرار العرض
@@ -932,19 +989,78 @@
     };
   });
 
-  // شريط التشغيل
-  document.getElementById('playPauseBtn').onclick=()=>{ if(audio.paused){ audio.play(); document.getElementById('playPauseBtn').innerHTML='⏸'; }else{ audio.pause(); document.getElementById('playPauseBtn').innerHTML='▶'; } };
-  document.getElementById('prevBtn').onclick=()=>{ if(radios.length && currentPlayingId){ let idx=radios.findIndex(r=>r.id==currentPlayingId); idx=(idx-1+radios.length)%radios.length; playRadio(radios[idx].id); } };
-  document.getElementById('nextBtn').onclick=()=>{ if(radios.length && currentPlayingId){ let idx=radios.findIndex(r=>r.id==currentPlayingId); idx=(idx+1)%radios.length; playRadio(radios[idx].id); } };
-  document.getElementById('volumeSlider').oninput=e=>audio.volume=e.target.value;
-  document.getElementById('hidePlayerBtn').onclick=()=>{
-    isPlayerHidden=true;
-    document.getElementById('miniPlayer').classList.add('hide');
+  // ========== تحكمات شريط التشغيل ==========
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const volumeSlider = document.getElementById('volumeSlider');
+  const muteBtn = document.getElementById('muteBtn');
+  
+  playPauseBtn.onclick = () => {
+    if(audio.paused) {
+      audio.play();
+      playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+    } else {
+      audio.pause();
+      playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+    }
   };
-  // إظهار الشريط مرة أخرى (بالضغط على أيقونة الصوت أو أي مكان)
-  const showPlayer = ()=>{ if(isPlayerHidden){ isPlayerHidden=false; document.getElementById('miniPlayer').classList.remove('hide'); } };
-  document.getElementById('volumeSlider').onclick=showPlayer;
-  document.getElementById('playPauseBtn').onclick=showPlayer;
+  
+  prevBtn.onclick = () => {
+    if(radios.length && currentPlayingId){
+      let idx = radios.findIndex(r => r.id == currentPlayingId);
+      idx = (idx - 1 + radios.length) % radios.length;
+      playRadio(radios[idx].id);
+    }
+  };
+  
+  nextBtn.onclick = () => {
+    if(radios.length && currentPlayingId){
+      let idx = radios.findIndex(r => r.id == currentPlayingId);
+      idx = (idx + 1) % radios.length;
+      playRadio(radios[idx].id);
+    }
+  };
+  
+  volumeSlider.oninput = (e) => {
+    const val = parseFloat(e.target.value);
+    audio.volume = val;
+    if(val === 0) {
+      muteBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+      isMuted = true;
+    } else if(val > 0 && val <= 0.5) {
+      muteBtn.innerHTML = '<i class="fas fa-volume-down"></i>';
+      isMuted = false;
+    } else {
+      muteBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+      isMuted = false;
+    }
+  };
+  
+  muteBtn.onclick = () => {
+    if(!isMuted) {
+      audio.volume = 0;
+      volumeSlider.value = 0;
+      muteBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+      isMuted = true;
+    } else {
+      audio.volume = 0.8;
+      volumeSlider.value = 0.8;
+      muteBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+      isMuted = false;
+    }
+  };
+  
+  audio.onended = () => {
+    if(radios.length && currentPlayingId){
+      let idx = radios.findIndex(r => r.id == currentPlayingId);
+      idx = (idx + 1) % radios.length;
+      playRadio(radios[idx].id);
+    }
+  };
+  
+  audio.onplay = () => { playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>'; };
+  audio.onpause = () => { playPauseBtn.innerHTML = '<i class="fas fa-play"></i>'; };
 
   // المصادقة
   auth.onAuthStateChanged(async(user)=>{
@@ -961,7 +1077,7 @@
       document.getElementById('authContainer').classList.remove('hidden');
       document.getElementById('app').classList.add('hidden');
       hideSplash();
-      showToast('يرجى تأكيد البريد الإلكتروني', 'error');
+      showToast('⚠️ يرجى تأكيد البريد الإلكتروني');
     }else{
       currentUser=null;
       document.getElementById('app').classList.add('hidden');
