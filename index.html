@@ -2,12 +2,67 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>راديو سحابي | Supabase</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>راديو سحابي | Firebase Edition</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Firebase SDKs -->
+  <script type="module">
+    // استيراد Firebase SDK بشكل حديث
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-storage.js";
+
+    // تكوين Firebase (بياناتك)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBRvU198Ov7i6XdQTiKkuPJ-8biyKQt0Eo",
+      authDomain: "radioapp-4f31a.firebaseapp.com",
+      projectId: "radioapp-4f31a",
+      storageBucket: "radioapp-4f31a.firebasestorage.app",
+      messagingSenderId: "109582001862",
+      appId: "1:109582001862:web:0f88fc50166c6d3d3019c7"
+    };
+
+    // تهيئة Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+    const googleProvider = new GoogleAuthProvider();
+
+    // جعل الكائنات متاحة في النطاق العام للاستخدام في الـ HTML events
+    window.db = db;
+    window.auth = auth;
+    window.storage = storage;
+    window.googleProvider = googleProvider;
+    window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+    window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+    window.signOut = signOut;
+    window.onAuthStateChanged = onAuthStateChanged;
+    window.signInWithPopup = signInWithPopup;
+    window.collection = collection;
+    window.doc = doc;
+    window.updateDoc = updateDoc;
+    window.deleteDoc = deleteDoc;
+    window.addDoc = addDoc;
+    window.getDocs = getDocs;
+    window.writeBatch = writeBatch;
+    window.ref = ref;
+    window.uploadBytes = uploadBytes;
+    window.getDownloadURL = getDownloadURL;
+    window.deleteObject = deleteObject;
+    window.query = query;
+    window.orderBy = orderBy;
+    window.onSnapshot = onSnapshot;
+    
+    // إشعار جاهزية Firebase
+    console.log("✅ Firebase initialized successfully");
+    window.dispatchEvent(new Event('firebase-ready'));
+  </script>
+  
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
     body { background: linear-gradient(135deg, #0f172a, #020617); color: white; min-height: 100vh; }
@@ -41,7 +96,7 @@
     .auth-card button:hover { transform: translateY(-2px); }
     .auth-card p { text-align: center; margin-top: 20px; color: rgba(255,255,255,0.7); }
     .auth-card span { color: #22c55e; cursor: pointer; }
-    .google-btn { background: #ef4444 !important; }
+    .google-btn { background: linear-gradient(135deg, #ea4335, #c5221f) !important; }
     
     .app { display: flex; min-height: 100vh; }
     .sidebar { width: 280px; padding: 25px; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; justify-content: space-between; overflow-y: auto; }
@@ -60,8 +115,8 @@
     .radio-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
     .radio-card { padding: 15px; transition: transform 0.3s; cursor: pointer; }
     .radio-card:hover { transform: translateY(-5px); }
-    .radio-card img { width: 100%; height: 180px; object-fit: cover; border-radius: 16px; margin-bottom: 12px; }
-    .card-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .radio-card img { width: 100%; height: 180px; object-fit: cover; border-radius: 16px; margin-bottom: 12px; background: #1e293b; }
+    .card-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
     .card-actions button { flex: 1; padding: 8px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; transition: transform 0.2s; }
     .card-actions button:hover { transform: translateY(-2px); }
     .play-btn { background: #22c55e; color: white; }
@@ -73,7 +128,7 @@
     .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     .modal-content { width: 100%; max-width: 500px; padding: 30px; }
     .modal-content h2 { text-align: center; margin-bottom: 20px; }
-    .modal-content input { width: 100%; padding: 12px; margin-bottom: 12px; background: rgba(255,255,255,0.1); border: none; border-radius: 10px; color: white; }
+    .modal-content input, .modal-content textarea { width: 100%; padding: 12px; margin-bottom: 12px; background: rgba(255,255,255,0.1); border: none; border-radius: 10px; color: white; }
     .modal-content button { width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
     
     .mini-player { position: fixed; bottom: 0; left: 0; right: 0; height: 80px; background: rgba(15,23,42,0.95); backdrop-filter: blur(20px); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-top: 1px solid rgba(255,255,255,0.1); z-index: 1000; }
@@ -90,13 +145,15 @@
     .empty-state { text-align: center; padding: 80px 20px; color: rgba(255,255,255,0.5); }
     
     @media (max-width: 768px) { .app { flex-direction: column; } .sidebar { width: 100%; height: auto; position: relative; } .mini-player { flex-direction: column; height: auto; gap: 10px; padding: 15px; } }
+    .upload-preview { margin: 10px 0; text-align: center; }
+    .upload-preview img { max-width: 80px; border-radius: 12px; }
   </style>
 </head>
 <body>
 
   <div id="splash-screen">
     <div class="loader"></div>
-    <div id="loading-status">جاري تحميل التطبيق...</div>
+    <div id="loading-status">جاري تحميل الراديو السحابي...</div>
   </div>
 
   <div class="auth-container hidden" id="authContainer">
@@ -122,9 +179,9 @@
   <div class="app hidden" id="app">
     <aside class="sidebar glass-card">
       <div>
-        <h1>📻 راديو Nojoom</h1>
+        <h1>📻 راديو نجوم</h1>
         <button id="addRadioBtn">+ إضافة محطة</button>
-        <input type="text" id="searchInput" placeholder="بحث...">
+        <input type="text" id="searchInput" placeholder="بحث عن محطة...">
         <div class="menu">
           <div class="menu-item active" data-filter="all">🏠 الرئيسية</div>
           <div class="menu-item" data-filter="favorites">❤️ المفضلة</div>
@@ -145,13 +202,15 @@
     </main>
   </div>
 
+  <!-- modal اضافة المحطات مع رفع الصور -->
   <div class="modal hidden" id="radioModal">
     <div class="modal-content glass-card">
-      <h2>➕ محطة جديدة</h2>
-      <input type="text" id="radioName" placeholder="اسم المحطة">
-      <input type="text" id="radioUrl" placeholder="رابط البث">
-      <input type="text" id="radioCategory" placeholder="التصنيف">
+      <h2>➕ محطة راديو جديدة</h2>
+      <input type="text" id="radioName" placeholder="اسم المحطة *">
+      <input type="text" id="radioUrl" placeholder="رابط البث المباشر * (مثل .mp3, .m3u8)">
+      <input type="text" id="radioCategory" placeholder="التصنيف (موسيقى, اخبار, رياضة)">
       <input type="file" id="radioImage" accept="image/*">
+      <div id="imagePreview" class="upload-preview hidden"><img id="previewImg" src=""></div>
       <button id="saveRadioBtn">💾 حفظ</button>
       <button id="closeModalBtn">❌ إلغاء</button>
     </div>
@@ -162,7 +221,7 @@
       <img id="playerImage" src="">
       <div>
         <h4 id="playerTitle">لا توجد محطة</h4>
-        <span>🎵 راديو مباشر</span>
+        <span>🎵 مباشر</span>
       </div>
     </div>
     <div class="player-controls">
@@ -176,174 +235,168 @@
   </div>
 
   <script>
-    // 🔑 بيانات Supabase - ضع بياناتك الصحيحة هنا
-    const SUPABASE_URL = 'https://ujplidlkvilhqlocyutn.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_0F09fDqtoW7i3mqqT8LtOg_nAj1XdnP';
-    
-    // تهيئة Supabase
-    const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
+    // المتغيرات العامة
     let currentUser = null;
     let radios = [];
     let currentFilter = 'all';
     let currentPlayingId = null;
-    const audio = new Audio();
+    let audio = new Audio();
     audio.volume = 0.8;
-    
-    // دوال مساعدة
+    let unsubscribeRadios = null;
+    let selectedImageFile = null;
+
     function updateLoadingStatus(msg, isError = false) {
       const el = document.getElementById('loading-status');
-      if(el) {
-        el.innerHTML = msg;
-        el.style.color = isError ? '#ef4444' : 'rgba(255,255,255,0.7)';
-      }
+      if(el) { el.innerHTML = msg; el.style.color = isError ? '#ef4444' : 'rgba(255,255,255,0.7)'; }
     }
-    
     function hideSplash() {
       const splash = document.getElementById('splash-screen');
-      if(splash) {
-        splash.style.opacity = '0';
-        setTimeout(() => splash.remove(), 500);
-      }
+      if(splash) { splash.style.opacity = '0'; setTimeout(() => splash.remove(), 500); }
     }
-    
     function showToast(icon, title) {
       Swal.fire({ toast: true, position: 'top-end', icon, title, showConfirmButton: false, timer: 3000, background: '#1e293b', color: '#fff' });
     }
-    
     function escapeHtml(str) {
       if(!str) return '';
-      return str.replace(/[&<>]/g, function(m) {
-        if(m === '&') return '&amp;';
-        if(m === '<') return '&lt;';
-        if(m === '>') return '&gt;';
-        return m;
+      return str.replace(/[&<>]/g, function(m) { if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m; });
+    }
+
+    // الاستماع المباشر للمحطات من Firestore
+    function listenToRadios() {
+      if(unsubscribeRadios) unsubscribeRadios();
+      if(!currentUser) return;
+      const q = query(collection(window.db, 'radios'), orderBy('createdAt', 'desc'));
+      unsubscribeRadios = onSnapshot(q, (snapshot) => {
+        radios = [];
+        snapshot.forEach(docSnap => {
+          let data = docSnap.data();
+          radios.push({ id: docSnap.id, ...data, favorite: data.favorite || false });
+        });
+        renderRadios();
+        updateLoadingStatus('تم التحميل', false);
+        hideSplash();
+      }, (error) => {
+        console.error(error);
+        showToast('error', 'خطأ في تحميل المحطات');
+        updateLoadingStatus('خطأ في الاتصال', true);
       });
     }
-    
-    // تحميل المحطات
-    async function loadRadios() {
-      if(!currentUser) return;
-      try {
-        const { data, error } = await supabase.from('radios').select('*').order('created_at', { ascending: false });
-        if(error) throw error;
-        radios = data || [];
-        renderRadios();
-      } catch(e) {
-        console.error(e);
-        showToast('error', 'فشل تحميل المحطات');
-      }
-    }
-    
+
     function renderRadios() {
       const grid = document.getElementById('radioGrid');
       let filtered = [...radios];
       if(currentFilter === 'favorites') filtered = radios.filter(r => r.favorite === true);
       else if(currentFilter === 'recent' && currentUser) {
-        const recent = JSON.parse(localStorage.getItem(`recent_${currentUser.id}`) || '[]');
-        filtered = recent.map(id => radios.find(r => r.id == id)).filter(Boolean);
+        const recentIds = JSON.parse(localStorage.getItem(`recent_${currentUser.uid}`) || '[]');
+        filtered = recentIds.map(id => radios.find(r => r.id == id)).filter(Boolean);
       }
       if(filtered.length === 0) {
-        grid.innerHTML = '<div class="empty-state"><i class="fas fa-radio" style="font-size:48px"></i><h3>لا توجد محطات</h3><p>أضف محطتك الأولى</p></div>';
+        grid.innerHTML = '<div class="empty-state"><i class="fas fa-radio" style="font-size:48px"></i><h3>لا توجد محطات</h3><p>أضف محطتك الأولى الآن</p></div>';
         return;
       }
       grid.innerHTML = filtered.map(radio => `
-        <div class="radio-card glass-card">
+        <div class="radio-card glass-card" data-id="${radio.id}">
           <img src="${radio.imageUrl || 'https://placehold.co/400x300/1e293b/22c55e?text=Radio'}" onerror="this.src='https://placehold.co/400x300/1e293b/22c55e?text=Radio'">
           <h3>${escapeHtml(radio.name)}</h3>
           <p>${escapeHtml(radio.category || 'عام')}</p>
           <div class="card-actions">
-            <button class="play-btn" onclick="playRadio('${radio.id}')">▶ تشغيل</button>
-            <button class="favorite-btn ${radio.favorite ? 'active' : ''}" onclick="toggleFavorite('${radio.id}')">❤️</button>
-            <button class="edit-btn" onclick="editRadio('${radio.id}')">✏️</button>
-            <button class="delete-btn" onclick="deleteRadio('${radio.id}')">🗑️</button>
+            <button class="play-btn" onclick="window.playRadio('${radio.id}')">▶ تشغيل</button>
+            <button class="favorite-btn ${radio.favorite ? 'active' : ''}" onclick="window.toggleFavorite('${radio.id}')">❤️</button>
+            <button class="edit-btn" onclick="window.editRadio('${radio.id}')">✏️</button>
+            <button class="delete-btn" onclick="window.deleteRadio('${radio.id}')">🗑️</button>
           </div>
         </div>
       `).join('');
     }
-    
-    // دوال العمليات
+
+    // تشغيل المحطة
     window.playRadio = function(id) {
       const station = radios.find(r => r.id == id);
       if(!station) return;
       currentPlayingId = id;
       audio.src = station.streamUrl;
-      audio.play().catch(e => showToast('error', 'لا يمكن تشغيل البث'));
+      audio.play().catch(e => { showToast('error', 'لا يمكن تشغيل البث، تأكد من الرابط'); });
       document.getElementById('miniPlayer').classList.remove('hidden');
       document.getElementById('playerTitle').innerText = station.name;
       document.getElementById('playerImage').src = station.imageUrl || 'https://placehold.co/400x300/1e293b/22c55e?text=Radio';
       document.getElementById('playPauseBtn').innerHTML = '⏸';
       if(currentUser) {
-        let recent = JSON.parse(localStorage.getItem(`recent_${currentUser.id}`) || '[]');
+        let recent = JSON.parse(localStorage.getItem(`recent_${currentUser.uid}`) || '[]');
         recent = [id, ...recent.filter(i => i != id)].slice(0, 10);
-        localStorage.setItem(`recent_${currentUser.id}`, JSON.stringify(recent));
+        localStorage.setItem(`recent_${currentUser.uid}`, JSON.stringify(recent));
         if(currentFilter === 'recent') renderRadios();
       }
       showToast('success', `تشغيل ${station.name}`);
     };
-    
+
     window.toggleFavorite = async function(id) {
       const station = radios.find(r => r.id == id);
       if(!station) return;
-      await supabase.from('radios').update({ favorite: !station.favorite }).eq('id', id);
-      showToast('success', station.favorite ? 'أزيلت من المفضلة' : 'أضيفت إلى المفضلة');
-      await loadRadios();
+      const newFav = !station.favorite;
+      const radioRef = doc(window.db, 'radios', id);
+      await window.updateDoc(radioRef, { favorite: newFav });
+      showToast('success', newFav ? 'أضيفت إلى المفضلة' : 'أزيلت من المفضلة');
     };
-    
+
     window.deleteRadio = async function(id) {
       const result = await Swal.fire({ title: 'حذف المحطة؟', text: 'لا يمكن التراجع', icon: 'warning', showCancelButton: true, confirmButtonText: 'نعم', cancelButtonText: 'إلغاء' });
       if(result.isConfirmed) {
-        await supabase.from('radios').delete().eq('id', id);
+        const radio = radios.find(r => r.id == id);
+        if(radio && radio.imageUrl && radio.imageUrl.includes('firebasestorage')) {
+          try {
+            const imageRef = ref(window.storage, radio.imageUrl);
+            await window.deleteObject(imageRef).catch(()=>{});
+          } catch(e) {}
+        }
+        await window.deleteDoc(doc(window.db, 'radios', id));
         showToast('success', 'تم الحذف');
-        await loadRadios();
+        if(currentPlayingId == id) { audio.pause(); audio.src = ''; document.getElementById('miniPlayer').classList.add('hidden'); }
       }
     };
-    
+
     window.editRadio = async function(id) {
       const radio = radios.find(r => r.id == id);
-      const { value: values } = await Swal.fire({
+      const { value: formValues } = await Swal.fire({
         title: 'تعديل المحطة',
-        html: `<input id="name" class="swal2-input" value="${radio.name.replace(/"/g, '&quot;')}"><input id="url" class="swal2-input" value="${radio.streamUrl.replace(/"/g, '&quot;')}"><input id="cat" class="swal2-input" value="${(radio.category || '').replace(/"/g, '&quot;')}">`,
-        preConfirm: () => ({ name: document.getElementById('name').value, url: document.getElementById('url').value, category: document.getElementById('cat').value })
+        html: `<input id="edit-name" class="swal2-input" placeholder="الاسم" value="${radio.name.replace(/"/g, '&quot;')}">
+               <input id="edit-url" class="swal2-input" placeholder="رابط البث" value="${radio.streamUrl.replace(/"/g, '&quot;')}">
+               <input id="edit-cat" class="swal2-input" placeholder="التصنيف" value="${(radio.category || '').replace(/"/g, '&quot;')}">`,
+        preConfirm: () => ({ name: document.getElementById('edit-name').value, url: document.getElementById('edit-url').value, category: document.getElementById('edit-cat').value })
       });
-      if(values) {
-        await supabase.from('radios').update({ name: values.name, streamUrl: values.url, category: values.category }).eq('id', id);
+      if(formValues) {
+        const radioRef = doc(window.db, 'radios', id);
+        await window.updateDoc(radioRef, { name: formValues.name, streamUrl: formValues.url, category: formValues.category });
         showToast('success', 'تم التحديث');
-        await loadRadios();
       }
     };
-    
-    // المصادقة
+
+    // وظائف المصادقة
     document.getElementById('registerBtn').onclick = async () => {
       const email = document.getElementById('registerEmail').value;
       const password = document.getElementById('registerPassword').value;
       const confirm = document.getElementById('registerConfirmPassword').value;
       if(password !== confirm) return showToast('error', 'كلمتا المرور غير متطابقتين');
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { name: document.getElementById('registerName').value } }
-      });
-      if(error) showToast('error', error.message);
-      else {
-        showToast('success', 'تم التسجيل، راجع بريدك لتفعيل الحساب');
-        document.getElementById('registerCard').classList.add('hidden');
-        document.getElementById('loginCard').classList.remove('hidden');
-      }
+      try {
+        const userCred = await window.createUserWithEmailAndPassword(window.auth, email, password);
+        if(userCred.user) {
+          showToast('success', 'تم التسجيل بنجاح');
+          document.getElementById('registerCard').classList.add('hidden');
+          document.getElementById('loginCard').classList.remove('hidden');
+        }
+      } catch(err) { showToast('error', err.message); }
     };
-    
     document.getElementById('loginBtn').onclick = async () => {
       const email = document.getElementById('loginEmail').value;
       const password = document.getElementById('loginPassword').value;
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if(error) showToast('error', 'بيانات غير صحيحة');
+      try {
+        await window.signInWithEmailAndPassword(window.auth, email, password);
+      } catch(err) { showToast('error', 'البريد أو كلمة المرور خاطئة'); }
     };
-    
     document.getElementById('googleLoginBtn').onclick = async () => {
-      const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
-      if(error) showToast('error', error.message);
+      try {
+        await window.signInWithPopup(window.auth, window.googleProvider);
+      } catch(err) { showToast('error', err.message); }
     };
-    
     document.getElementById('showRegister').onclick = () => {
       document.getElementById('loginCard').classList.add('hidden');
       document.getElementById('registerCard').classList.remove('hidden');
@@ -352,40 +405,50 @@
       document.getElementById('registerCard').classList.add('hidden');
       document.getElementById('loginCard').classList.remove('hidden');
     };
-    
     document.getElementById('logoutBtn').onclick = async () => {
-      await supabase.auth.signOut();
-      currentUser = null;
-      radios = [];
-      document.getElementById('app').classList.add('hidden');
-      document.getElementById('authContainer').classList.remove('hidden');
+      await window.signOut(window.auth);
+      audio.pause(); audio.src = '';
       document.getElementById('miniPlayer').classList.add('hidden');
-      audio.pause();
-      audio.src = '';
-      showToast('success', 'تم تسجيل الخروج');
     };
-    
-    // إضافة محطة
+
+    // اضافة محطة مع رفع صورة
+    document.getElementById('radioImage').addEventListener('change', (e) => {
+      if(e.target.files.length) {
+        selectedImageFile = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          document.getElementById('imagePreview').classList.remove('hidden');
+          document.getElementById('previewImg').src = ev.target.result;
+        };
+        reader.readAsDataURL(selectedImageFile);
+      } else { selectedImageFile = null; document.getElementById('imagePreview').classList.add('hidden'); }
+    });
+    document.getElementById('saveRadioBtn').onclick = async () => {
+      const name = document.getElementById('radioName').value.trim();
+      const streamUrl = document.getElementById('radioUrl').value.trim();
+      if(!name || !streamUrl) return showToast('warning', 'الاسم ورابط البث مطلوبة');
+      let imageUrl = null;
+      if(selectedImageFile) {
+        const ext = selectedImageFile.name.split('.').pop();
+        const storagePath = `radio-images/${Date.now()}_${Math.random().toString(36)}.${ext}`;
+        const storageRef = ref(window.storage, storagePath);
+        await window.uploadBytes(storageRef, selectedImageFile);
+        imageUrl = await window.getDownloadURL(storageRef);
+      }
+      await window.addDoc(collection(window.db, 'radios'), {
+        name, streamUrl, category: document.getElementById('radioCategory').value.trim() || 'عام',
+        imageUrl: imageUrl || null, favorite: false, createdAt: new Date().toISOString()
+      });
+      showToast('success', 'تمت إضافة المحطة');
+      document.getElementById('radioModal').classList.add('hidden');
+      document.getElementById('radioName').value = ''; document.getElementById('radioUrl').value = '';
+      document.getElementById('radioCategory').value = ''; document.getElementById('radioImage').value = '';
+      selectedImageFile = null; document.getElementById('imagePreview').classList.add('hidden');
+    };
     document.getElementById('addRadioBtn').onclick = () => document.getElementById('radioModal').classList.remove('hidden');
     document.getElementById('closeModalBtn').onclick = () => document.getElementById('radioModal').classList.add('hidden');
-    document.getElementById('saveRadioBtn').onclick = async () => {
-      const name = document.getElementById('radioName').value;
-      const streamUrl = document.getElementById('radioUrl').value;
-      if(!name || !streamUrl) return showToast('warning', 'املأ الحقول');
-      const { error } = await supabase.from('radios').insert([{ name, streamUrl, category: document.getElementById('radioCategory').value || 'عام', imageUrl: null, favorite: false }]);
-      if(error) showToast('error', error.message);
-      else {
-        showToast('success', 'تمت الإضافة');
-        document.getElementById('radioModal').classList.add('hidden');
-        document.getElementById('radioName').value = '';
-        document.getElementById('radioUrl').value = '';
-        document.getElementById('radioCategory').value = '';
-        document.getElementById('radioImage').value = '';
-        await loadRadios();
-      }
-    };
-    
-    // مشغل الصوت
+
+    // تحكمات المشغل
     document.getElementById('playPauseBtn').onclick = () => {
       if(audio.paused) { audio.play(); document.getElementById('playPauseBtn').innerHTML = '⏸'; }
       else { audio.pause(); document.getElementById('playPauseBtn').innerHTML = '▶'; }
@@ -405,17 +468,13 @@
       }
     };
     document.getElementById('volumeSlider').oninput = (e) => audio.volume = e.target.value;
-    
-    // بحث
     document.getElementById('searchInput').oninput = (e) => {
       const val = e.target.value.toLowerCase();
       document.querySelectorAll('.radio-card').forEach(card => {
         const title = card.querySelector('h3')?.innerText.toLowerCase() || '';
-        card.style.display = title.includes(val) ? 'block' : 'none';
+        card.style.display = title.includes(val) ? 'flex' : 'none';
       });
     };
-    
-    // فلتر القائمة
     document.querySelectorAll('.menu-item').forEach(item => {
       item.onclick = () => {
         document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
@@ -426,43 +485,30 @@
         document.getElementById('pageTitle').innerText = titles[currentFilter];
       };
     });
-    
-    // الاستماع لحالة المصادقة
-    supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth event:', event);
-      if(event === 'SIGNED_IN' && session?.user) {
-        currentUser = session.user;
-        document.getElementById('authContainer').classList.add('hidden');
-        document.getElementById('app').classList.remove('hidden');
-        hideSplash();
-        await loadRadios();
-        showToast('success', `مرحباً ${currentUser.email}`);
-      } else if(event === 'SIGNED_OUT') {
-        currentUser = null;
-        radios = [];
-        document.getElementById('app').classList.add('hidden');
-        document.getElementById('authContainer').classList.remove('hidden');
-        document.getElementById('miniPlayer').classList.add('hidden');
-        audio.pause();
-        hideSplash();
-      }
-    });
-    
-    // التحقق من جلسة حالية
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+
+    // مراقبة حالة المصادقة مع Firebase
+    window.onAuthStateChanged(window.auth, async (user) => {
       if(user) {
         currentUser = user;
         document.getElementById('authContainer').classList.add('hidden');
         document.getElementById('app').classList.remove('hidden');
+        if(unsubscribeRadios) unsubscribeRadios();
+        listenToRadios();  // بدء الاستماع المباشر للبيانات
+        showToast('success', `مرحباً ${user.email || 'مستخدم'}`);
         hideSplash();
-        await loadRadios();
       } else {
-        document.getElementById('authContainer').classList.remove('hidden');
+        if(unsubscribeRadios) unsubscribeRadios();
+        currentUser = null; radios = [];
         document.getElementById('app').classList.add('hidden');
+        document.getElementById('authContainer').classList.remove('hidden');
+        document.getElementById('miniPlayer').classList.add('hidden');
+        audio.pause(); audio.src = '';
         hideSplash();
       }
-    })();
+    });
+    
+    // بداية التطبيق (فحص الجلسة عبر onAuthStateChanged سيتم تشغيله تلقائياً)
+    setTimeout(() => { if(!currentUser && !document.getElementById('authContainer').classList.contains('hidden')) hideSplash(); }, 1000);
   </script>
 </body>
 </html>
