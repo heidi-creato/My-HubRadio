@@ -12,6 +12,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
   
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
@@ -291,12 +292,10 @@
       appId: "1:109582001862:web:0f88fc50166c6d3d3019c7"
     };
 
-    const CLOUDINARY_CLOUD_NAME = "dqdpbqkyp";
-    const CLOUDINARY_UPLOAD_PRESET = "radio_stations";
-
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
+    const storage = firebase.storage();
     
     let currentUser = null;
     let radios = [];
@@ -308,7 +307,8 @@
     let audio = new Audio();
     audio.volume = 0.8;
     let unsubscribeRadios = null;
-    let currentCloudinaryUrl = null;
+    let currentImageFile = null;
+    let currentImageUrl = null;
 
     function showToast(icon, title) {
       Swal.fire({ toast: true, position: 'top-end', icon, title, showConfirmButton: false, timer: 3000, background: '#1e293b', color: '#fff' });
@@ -316,16 +316,23 @@
 
     function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
 
-    async function uploadToCloudinary(file) {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-        method: 'POST', body: formData
+    // رفع الصورة إلى Firebase Storage
+    async function uploadImageToStorage(file, path) {
+      const storageRef = storage.ref(path);
+      const uploadTask = storageRef.put(file);
+      return new Promise((resolve, reject) => {
+        uploadTask.on('state_changed', 
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            document.getElementById('uploadProgress').innerHTML = `جاري الرفع: ${Math.round(progress)}%`;
+          },
+          (error) => reject(error),
+          async () => {
+            const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+            resolve(downloadURL);
+          }
+        );
       });
-      if(!response.ok) throw new Error('فشل الرفع');
-      const data = await response.json();
-      return data.secure_url;
     }
 
     async function saveOrder() {
@@ -403,6 +410,13 @@
     async function deleteRadio(id) {
       const result = await Swal.fire({ title: 'حذف المحطة؟', text: 'لا يمكن التراجع', icon: 'warning', showCancelButton: true, confirmButtonText: 'نعم' });
       if(result.isConfirmed) {
+        const radio = radios.find(r => r.id == id);
+        if(radio && radio.imageUrl) {
+          try {
+            const imageRef = storage.refFromURL(radio.imageUrl);
+            await imageRef.delete();
+          } catch(e) { console.log('Error deleting image:', e); }
+        }
         await db.collection('users').doc(currentUser.uid).collection('radios').doc(id).delete();
         if(currentPlayingId == id) { audio.pause(); document.getElementById('miniPlayer').classList.add('hidden'); }
         showToast('success', 'تم الحذف');
@@ -416,13 +430,14 @@
       document.getElementById('radioName').value = radio.name;
       document.getElementById('radioUrl').value = radio.streamUrl;
       document.getElementById('radioCategory').value = radio.category || '';
-      currentCloudinaryUrl = radio.imageUrl;
-      if(currentCloudinaryUrl) {
+      currentImageUrl = radio.imageUrl;
+      if(currentImageUrl) {
         document.getElementById('imagePreview').classList.remove('hidden');
-        document.getElementById('previewImg').src = currentCloudinaryUrl;
+        document.getElementById('previewImg').src = currentImageUrl;
       } else {
         document.getElementById('imagePreview').classList.add('hidden');
       }
+      currentImageFile = null;
       document.getElementById('deleteFromModalBtn').classList.remove('hidden');
       document.getElementById('radioModal').classList.remove('hidden');
     }
@@ -504,7 +519,6 @@
       document.getElementById('profileName').innerText = currentUser.displayName || 'مستخدم';
       document.getElementById('profileEmail').innerText = currentUser.email;
       
-      // تحميل صورة الملف الشخصي من Firestore
       const userDoc = await db.collection('users').doc(currentUser.uid).collection('settings').doc('profile').get();
       if(userDoc.exists && userDoc.data().avatarUrl) {
         document.getElementById('profileAvatar').src = userDoc.data().avatarUrl;
@@ -520,12 +534,14 @@
 
     async function updateProfileAvatar(file) {
       try {
-        const url = await uploadToCloudinary(file);
+        const ext = file.name.split('.').pop();
+        const path = `users/${currentUser.uid}/avatar.${ext}`;
+        const url = await uploadImageToStorage(file, path);
         await db.collection('users').doc(currentUser.uid).collection('settings').doc('profile').set({ avatarUrl: url }, { merge: true });
         document.getElementById('profileAvatar').src = url;
         showToast('success', 'تم تحديث الصورة الشخصية');
       } catch(err) {
-        showToast('error', 'فشل رفع الصورة');
+        showToast('error', 'فشل رفع الصورة: ' + err.message);
       }
     }
 
@@ -580,7 +596,8 @@
       document.getElementById('radioName').value = '';
       document.getElementById('radioUrl').value = '';
       document.getElementById('radioCategory').value = '';
-      currentCloudinaryUrl = null;
+      currentImageUrl = null;
+      currentImageFile = null;
       document.getElementById('imagePreview').classList.add('hidden');
       document.getElementById('deleteFromModalBtn').classList.add('hidden');
       document.getElementById('radioModal').classList.remove('hidden');
@@ -592,10 +609,26 @@
       const streamUrl = document.getElementById('radioUrl').value.trim();
       if(!name || !streamUrl) return showToast('warning', 'املأ الحقول المطلوبة');
       
+      let finalImageUrl = currentImageUrl;
+      
+      if(currentImageFile) {
+        document.getElementById('uploadProgress').classList.remove('hidden');
+        try {
+          const ext = currentImageFile.name.split('.').pop();
+          const path = `users/${currentUser.uid}/radios/${Date.now()}.${ext}`;
+          finalImageUrl = await uploadImageToStorage(currentImageFile, path);
+        } catch(err) {
+          showToast('error', 'فشل رفع الصورة: ' + err.message);
+          document.getElementById('uploadProgress').classList.add('hidden');
+          return;
+        }
+        document.getElementById('uploadProgress').classList.add('hidden');
+      }
+      
       const data = {
         name, streamUrl,
         category: document.getElementById('radioCategory').value.trim() || 'عام',
-        imageUrl: currentCloudinaryUrl || null,
+        imageUrl: finalImageUrl || null,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       };
       
@@ -623,18 +656,24 @@
     const imageUploadArea = document.getElementById('imageUploadArea');
     const imageInput = document.getElementById('radioImage');
     imageUploadArea.onclick = () => imageInput.click();
-    imageInput.onchange = async (e) => {
+    imageInput.onchange = (e) => {
       const file = e.target.files[0];
       if(!file) return;
-      document.getElementById('uploadProgress').classList.remove('hidden');
-      try {
-        const url = await uploadToCloudinary(file);
-        currentCloudinaryUrl = url;
+      if(!file.type.startsWith('image/')) {
+        showToast('error', 'يرجى اختيار ملف صورة');
+        return;
+      }
+      if(file.size > 5 * 1024 * 1024) {
+        showToast('error', 'حجم الصورة يجب أن لا يتجاوز 5 ميجابايت');
+        return;
+      }
+      currentImageFile = file;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
         document.getElementById('imagePreview').classList.remove('hidden');
-        document.getElementById('previewImg').src = url;
-        showToast('success', 'تم رفع الصورة');
-      } catch(err) { showToast('error', 'فشل الرفع'); }
-      document.getElementById('uploadProgress').classList.add('hidden');
+        document.getElementById('previewImg').src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
     };
 
     document.getElementById('closeModalBtn').onclick = () => document.getElementById('radioModal').classList.add('hidden');
