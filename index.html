@@ -7,938 +7,833 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
-    body { background: linear-gradient(135deg, #0f172a, #020617); color: white; min-height: 100vh; padding-bottom: 85px; }
+    body { background: linear-gradient(135deg, #f5f7fa, #eef2f7); color: #1e293b; min-height: 100vh; padding-bottom: 85px; }
     .hidden { display: none !important; }
     
     /* شاشة البداية */
     #splash-screen {
-      position: fixed; inset: 0; background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      position: fixed; inset: 0; background: linear-gradient(135deg, #667eea, #764ba2);
       display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999;
       transition: opacity 0.5s ease;
     }
     .loader {
-      width: 70px; height: 70px; border-radius: 50%;
-      background: conic-gradient(from 0deg, #22c55e, #3b82f6, #a855f7, #22c55e);
-      animation: spin 1s linear infinite;
-      margin-bottom: 25px;
-      position: relative;
-    }
-    .loader::before {
-      content: '';
-      position: absolute;
-      inset: 5px;
-      background: #0f0c29;
-      border-radius: 50%;
+      width: 60px; height: 60px; border: 4px solid rgba(255,255,255,0.3);
+      border-top: 4px solid white; border-radius: 50%; animation: spin 1s linear infinite;
+      margin-bottom: 20px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    #loading-status { color: rgba(255,255,255,0.8); font-size: 14px; margin-top: 10px; letter-spacing: 1px; }
+    #loading-status { color: white; font-size: 14px; letter-spacing: 1px; }
     
-    /* الحاويات الزجاجية */
+    /* حاويات عامة */
     .glass-card {
-      background: rgba(255,255,255,0.05); backdrop-filter: blur(15px);
-      border: 1px solid rgba(255,255,255,0.08); border-radius: 28px;
-      transition: all 0.3s ease;
+      background: rgba(255,255,255,0.9); backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2); border-radius: 24px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.05);
     }
-    .glass-card:hover { border-color: rgba(34,197,94,0.3); }
     
-    /* شاشة المصادقة */
-    .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); }
-    .auth-card { width: 100%; max-width: 450px; padding: 40px; animation: fadeInUp 0.6s ease; }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-    .auth-card h2 { text-align: center; margin-bottom: 30px; font-size: 28px; background: linear-gradient(135deg, #22c55e, #3b82f6, #a855f7); -webkit-background-clip: text; background-clip: text; color: transparent; }
-    .auth-card input { width: 100%; padding: 14px 18px; margin-bottom: 15px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; color: white; font-size: 16px; transition: all 0.2s; }
-    .auth-card input:focus { outline: none; border-color: #22c55e; background: rgba(34,197,94,0.1); }
-    .auth-card button { width: 100%; padding: 14px; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; border-radius: 16px; color: white; font-weight: bold; font-size: 16px; cursor: pointer; transition: all 0.2s; margin-bottom: 10px; }
-    .auth-card button:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(34,197,94,0.4); }
-    .google-btn { background: linear-gradient(135deg, #ea4335, #c5221f) !important; }
-    .google-btn:hover { box-shadow: 0 10px 25px -5px rgba(234,67,53,0.4) !important; }
-    .auth-card p { text-align: center; margin-top: 20px; color: rgba(255,255,255,0.6); }
-    .auth-card span { color: #22c55e; cursor: pointer; font-weight: 500; }
-    
-    /* التطبيق الرئيسي */
-    .app { display: flex; min-height: 100vh; }
-    
-    /* الشريط الجانبي */
-    .sidebar { width: 280px; padding: 25px; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; justify-content: space-between; overflow-y: auto; background: linear-gradient(180deg, rgba(15,23,42,0.8) 0%, rgba(2,6,23,0.9) 100%); backdrop-filter: blur(12px); border-left: 1px solid rgba(255,255,255,0.05); }
-    .sidebar h1 { margin-bottom: 30px; font-size: 1.6rem; text-align: center; background: linear-gradient(135deg, #22c55e, #3b82f6); -webkit-background-clip: text; background-clip: text; color: transparent; }
-    .sidebar button { width: 100%; padding: 12px; margin-bottom: 12px; background: linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.1)); border: 1px solid rgba(34,197,94,0.3); border-radius: 16px; color: white; font-weight: bold; cursor: pointer; transition: all 0.2s; }
-    .sidebar button:hover { background: linear-gradient(135deg, #22c55e, #16a34a); border-color: transparent; transform: translateY(-2px); }
-    #searchInput { width: 100%; padding: 12px 16px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; color: white; margin-bottom: 20px; transition: all 0.2s; }
-    #searchInput:focus { outline: none; border-color: #22c55e; background: rgba(34,197,94,0.1); }
-    .menu-item { padding: 12px 16px; margin-bottom: 6px; border-radius: 16px; cursor: pointer; transition: all 0.2s; font-weight: 500; }
-    .menu-item:hover { background: rgba(255,255,255,0.08); transform: translateX(-4px); }
-    .menu-item.active { background: linear-gradient(90deg, rgba(34,197,94,0.25), transparent); border-left: 3px solid #22c55e; }
-    .logout-btn { background: linear-gradient(135deg, rgba(239,68,68,0.2), rgba(239,68,68,0.1)) !important; border-color: rgba(239,68,68,0.3) !important; }
-    .logout-btn:hover { background: linear-gradient(135deg, #ef4444, #dc2626) !important; }
-    .profile-btn { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(59,130,246,0.1)) !important; border-color: rgba(59,130,246,0.3) !important; margin-top: 10px; }
-    .profile-btn:hover { background: linear-gradient(135deg, #3b82f6, #1e40af) !important; }
-    
-    /* المحتوى الرئيسي */
-    .main-content { flex: 1; padding: 30px; overflow-y: auto; }
-    .topbar { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
-    .topbar h2 { font-size: 28px; background: linear-gradient(135deg, #22c55e, #3b82f6); -webkit-background-clip: text; background-clip: text; color: transparent; }
-    
-    /* أزرار العرض */
-    .view-options { display: flex; gap: 8px; background: rgba(255,255,255,0.05); padding: 6px; border-radius: 40px; }
-    .view-btn { background: transparent; border: none; padding: 8px 20px; border-radius: 30px; color: white; cursor: pointer; transition: all 0.2s; font-size: 14px; }
-    .view-btn.active { background: #22c55e; box-shadow: 0 4px 12px rgba(34,197,94,0.3); }
-    .edit-mode-btn { background: linear-gradient(135deg, #f59e0b, #d97706) !important; border: none !important; }
-    
-    /* شبكة القنوات */
-    .radio-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 20px; }
-    .radio-card { position: relative; padding: 14px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; border-radius: 24px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); }
-    .radio-card:hover { background: rgba(34,197,94,0.1); transform: translateY(-5px); border-color: rgba(34,197,94,0.4); box-shadow: 0 20px 30px -12px rgba(0,0,0,0.3); }
-    .radio-card.edit-mode { cursor: grab; }
-    .radio-card.edit-mode:active { cursor: grabbing; }
-    .radio-card.dragging { opacity: 0.5; transform: scale(0.95); }
-    .radio-card img { width: 100%; height: 140px; object-fit: cover; border-radius: 20px; margin-bottom: 12px; background: linear-gradient(135deg, #1e293b, #0f172a); transition: transform 0.3s; }
-    .radio-card:hover img { transform: scale(1.02); }
-    .radio-card h3 { font-size: 14px; margin-bottom: 5px; text-align: center; font-weight: 600; }
-    
-    /* أزرار التحكم على البطاقة */
-    .menu-dots {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(4px);
+    /* شريط علوي بسيط */
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .logo h1 {
+      font-size: 1.5rem;
+      background: linear-gradient(135deg, #22c55e, #3b82f6);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      font-weight: 700;
+    }
+    .nav-actions {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .icon-btn {
+      background: #f1f5f9;
+      border: none;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
-      width: 32px;
-      height: 32px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      color: #1e293b;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .icon-btn:hover { background: #e2e8f0; transform: scale(1.05); }
+    .profile-trigger {
+      background: linear-gradient(135deg, #22c55e, #3b82f6);
+      color: white;
+      font-weight: bold;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      z-index: 10;
       transition: all 0.2s;
     }
-    .menu-dots:hover { background: #22c55e; transform: scale(1.1); }
+    .profile-trigger:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(34,197,94,0.3); }
+    
+    /* قائمة المستخدم المنسدلة (Dropdown) */
+    .user-dropdown {
+      position: absolute;
+      top: 70px;
+      right: 24px;
+      background: white;
+      border-radius: 20px;
+      width: 260px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      z-index: 200;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+    }
+    .dropdown-header {
+      padding: 20px;
+      text-align: center;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .dropdown-header img {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 10px;
+      border: 3px solid #22c55e;
+    }
+    .dropdown-header h4 { font-size: 1rem; margin-bottom: 5px; color: #1e293b; }
+    .dropdown-header p { font-size: 0.75rem; color: #64748b; }
+    .dropdown-menu {
+      padding: 8px 0;
+    }
+    .dropdown-item {
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+      color: #334155;
+    }
+    .dropdown-item i { width: 24px; font-size: 1.1rem; color: #22c55e; }
+    .dropdown-item:hover { background: #f1f5f9; }
+    .dropdown-divider {
+      height: 1px;
+      background: #e2e8f0;
+      margin: 8px 0;
+    }
+    
+    /* أزرار عرض بسيطة */
+    .view-bar {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 16px 24px;
+    }
+    .view-pill {
+      background: #f1f5f9;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 40px;
+      font-weight: 500;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .view-pill.active {
+      background: #22c55e;
+      color: white;
+      box-shadow: 0 2px 8px rgba(34,197,94,0.3);
+    }
+    
+    /* شبكة القنوات */
+    .radio-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 20px;
+      padding: 0 24px 24px 24px;
+    }
+    .radio-card {
+      background: white;
+      border-radius: 24px;
+      padding: 16px;
+      transition: all 0.25s ease;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      border: 1px solid rgba(0,0,0,0.05);
+      position: relative;
+    }
+    .radio-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px -12px rgba(0,0,0,0.15);
+      border-color: #22c55e;
+    }
+    .radio-card img {
+      width: 100%;
+      height: 130px;
+      object-fit: cover;
+      border-radius: 20px;
+      margin-bottom: 12px;
+      background: #f1f5f9;
+    }
+    .radio-card h3 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-align: center;
+      color: #1e293b;
+    }
+    /* قائمة ثلاث نقاط */
+    .menu-dots {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(255,255,255,0.9);
+      border-radius: 30px;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      backdrop-filter: blur(2px);
+    }
+    .menu-dots:hover { background: #22c55e; color: white; }
+    /* مقبض السحب */
     .drag-handle {
       position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(4px);
-      border-radius: 50%;
-      width: 32px;
-      height: 32px;
+      top: 12px;
+      left: 12px;
+      background: rgba(255,255,255,0.9);
+      border-radius: 30px;
+      width: 28px;
+      height: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: grab;
-      z-index: 10;
-      transition: all 0.2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     }
-    .drag-handle:hover { background: #f59e0b; transform: scale(1.05); }
+    .drag-handle:active { cursor: grabbing; }
     
-    /* عرض عمودي */
-    .vertical-view .radio-grid { display: flex; flex-direction: column; gap: 12px; }
-    .vertical-view .radio-card { display: flex; align-items: center; gap: 18px; padding: 14px 20px; }
-    .vertical-view .radio-card img { width: 60px; height: 60px; margin: 0; border-radius: 16px; }
-    .vertical-view .radio-card h3 { text-align: right; flex: 1; margin: 0; font-size: 16px; }
-    .vertical-view .menu-dots { position: static; margin-right: 10px; width: 30px; height: 30px; }
-    .vertical-view .drag-handle { position: static; margin-left: 10px; width: 30px; height: 30px; }
+    /* العرض العمودي */
+    .vertical-view .radio-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .vertical-view .radio-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 20px;
+    }
+    .vertical-view .radio-card img {
+      width: 60px;
+      height: 60px;
+      margin: 0;
+    }
+    .vertical-view .radio-card h3 {
+      flex: 1;
+      text-align: right;
+      margin: 0;
+    }
+    .vertical-view .menu-dots,
+    .vertical-view .drag-handle {
+      position: static;
+      margin: 0 6px;
+    }
     
-    /* عرض دائري */
-    .circle-view .radio-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 25px; }
-    .circle-view .radio-card { text-align: center; width: 100px; padding: 12px; border-radius: 50px; }
-    .circle-view .radio-card img { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 10px; border: 3px solid #22c55e; transition: all 0.3s; }
-    .circle-view .radio-card:hover img { transform: scale(1.08); border-color: #a855f7; }
-    .circle-view .radio-card h3 { font-size: 12px; }
-    .circle-view .menu-dots { top: 5px; right: 5px; width: 26px; height: 26px; }
-    .circle-view .drag-handle { top: 5px; left: 5px; width: 26px; height: 26px; }
-    
-    /* صفحة الملف الشخصي */
-    .profile-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); }
-    .profile-card { width: 100%; max-width: 500px; padding: 45px; text-align: center; animation: fadeInUp 0.5s ease; }
-    .profile-avatar {
-      width: 130px;
-      height: 130px;
+    /* العرض الدائري */
+    .circle-view .radio-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 24px;
+    }
+    .circle-view .radio-card {
+      width: 100px;
+      text-align: center;
+      background: transparent;
+      box-shadow: none;
+      padding: 8px;
+    }
+    .circle-view .radio-card img {
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
-      margin: 0 auto 25px;
-      object-fit: cover;
-      border: 4px solid #22c55e;
-      cursor: pointer;
-      transition: all 0.3s;
-      box-shadow: 0 10px 30px -5px rgba(34,197,94,0.3);
+      border: 3px solid #22c55e;
+      margin-bottom: 8px;
     }
-    .profile-avatar:hover { transform: scale(1.05); border-color: #a855f7; }
-    .profile-card h2 { margin-bottom: 10px; font-size: 26px; }
-    .profile-card p { color: rgba(255,255,255,0.6); margin-bottom: 30px; }
-    .profile-input { width: 100%; padding: 14px; margin-bottom: 15px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; color: white; text-align: center; font-size: 16px; }
+    .circle-view .radio-card h3 {
+      font-size: 0.8rem;
+    }
+    .circle-view .menu-dots,
+    .circle-view .drag-handle {
+      top: 4px;
+      width: 24px;
+      height: 24px;
+    }
     
-    /* مشغل الصوت */
-    .mini-player { position: fixed; bottom: 0; left: 0; right: 0; height: 75px; background: rgba(10,14,23,0.95); backdrop-filter: blur(20px); display: flex; align-items: center; justify-content: space-between; padding: 0 25px; border-top: 1px solid rgba(34,197,94,0.2); z-index: 1000; transition: all 0.3s; }
-    .player-left { display: flex; align-items: center; gap: 15px; }
-    .player-left img { width: 50px; height: 50px; border-radius: 14px; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-    .player-left h4 { font-size: 15px; margin-bottom: 3px; }
-    .player-left span { font-size: 11px; color: #22c55e; }
-    .player-controls { display: flex; gap: 15px; }
-    .player-controls button { width: 44px; height: 44px; border-radius: 50%; border: none; background: linear-gradient(135deg, #22c55e, #16a34a); color: white; cursor: pointer; transition: all 0.2s; font-size: 18px; }
-    .player-controls button:hover { transform: scale(1.1); box-shadow: 0 5px 15px rgba(34,197,94,0.4); }
-    .volume-wrapper { display: flex; align-items: center; gap: 12px; }
-    .volume-wrapper input { width: 100px; height: 5px; border-radius: 10px; cursor: pointer; accent-color: #22c55e; }
+    /* مودال بسيط */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: white;
+      max-width: 500px;
+      width: 90%;
+      padding: 28px;
+      border-radius: 32px;
+      color: #1e293b;
+    }
+    .modal-content h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #1e293b;
+    }
+    .modal-content input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      background: #f8fafc;
+    }
+    .modal-content button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 16px;
+      font-weight: bold;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+    .image-upload-area {
+      border: 2px dashed #cbd5e1;
+      border-radius: 20px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+    .upload-preview {
+      text-align: center;
+      margin: 10px 0;
+    }
+    .upload-preview img {
+      width: 80px;
+      border-radius: 16px;
+    }
     
-    /* مودال */
-    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; z-index: 1001; animation: fadeIn 0.2s ease; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .modal-content { width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; padding: 30px; border-radius: 32px; }
-    .modal-content h2 { text-align: center; margin-bottom: 25px; font-size: 24px; background: linear-gradient(135deg, #22c55e, #3b82f6); -webkit-background-clip: text; background-clip: text; color: transparent; }
-    .modal-content input { width: 100%; padding: 14px; margin-bottom: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; color: white; transition: all 0.2s; }
-    .modal-content input:focus { outline: none; border-color: #22c55e; }
-    .image-upload-container { border: 2px dashed rgba(255,255,255,0.2); border-radius: 20px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s; margin-bottom: 15px; }
-    .image-upload-container:hover { border-color: #22c55e; background: rgba(34,197,94,0.1); }
-    .upload-preview { margin: 10px 0; text-align: center; }
-    .upload-preview img { max-width: 90px; border-radius: 20px; border: 3px solid #22c55e; }
-    .empty-state { text-align: center; padding: 70px 20px; color: rgba(255,255,255,0.5); }
-    .empty-state i { font-size: 60px; margin-bottom: 20px; opacity: 0.5; }
-    .skeleton-card { height: 200px; border-radius: 24px; background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
-    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-    
-    @media (max-width: 768px) { 
-      .app { flex-direction: column; } 
-      .sidebar { width: 100%; height: auto; position: relative; border-radius: 0; }
-      .radio-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; }
-      .mini-player { flex-direction: column; height: auto; gap: 10px; padding: 15px; }
-      .player-controls { order: -1; }
+    /* مشغل سفلي */
+    .mini-player {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      z-index: 100;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+    }
+    .player-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .player-left img {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      object-fit: cover;
+    }
+    .player-controls button {
+      background: #f1f5f9;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      margin: 0 5px;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 60px;
+      color: #94a3b8;
+    }
+    .skeleton-card {
+      height: 200px;
+      background: #f1f5f9;
+      border-radius: 24px;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+    @media (max-width: 640px) {
+      .radio-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+      .top-nav { padding: 10px 16px; }
     }
   </style>
 </head>
 <body>
 
-  <div id="splash-screen">
-    <div class="loader"></div>
-    <div id="loading-status">جاري تشغيل الراديو...</div>
-  </div>
+<div id="splash-screen">
+  <div class="loader"></div>
+  <div id="loading-status">جاري تحميل التطبيق...</div>
+</div>
 
-  <div class="auth-container hidden" id="authContainer">
-    <div class="glass-card auth-card" id="loginCard">
-      <h2>🔐 تسجيل الدخول</h2>
-      <input type="email" id="loginEmail" placeholder="البريد الإلكتروني">
-      <input type="password" id="loginPassword" placeholder="كلمة المرور">
-      <button id="loginBtn">تسجيل الدخول</button>
-      <button id="googleLoginBtn" class="google-btn"><i class="fab fa-google"></i> Google</button>
-      <p>ليس لديك حساب؟ <span id="showRegister">إنشاء حساب</span></p>
+<!-- شاشات تسجيل الدخول -->
+<div class="auth-container hidden" id="authContainer">
+  <div class="glass-card auth-card" id="loginCard" style="background: white;">
+    <h2 style="color:#1e293b">🔐 تسجيل الدخول</h2>
+    <input type="email" id="loginEmail" placeholder="البريد الإلكتروني">
+    <input type="password" id="loginPassword" placeholder="كلمة المرور">
+    <button id="loginBtn">تسجيل الدخول</button>
+    <button id="googleLoginBtn" class="google-btn"><i class="fab fa-google"></i> Google</button>
+    <p>ليس لديك حساب؟ <span id="showRegister">إنشاء حساب</span></p>
+  </div>
+  <div class="glass-card auth-card hidden" id="registerCard" style="background: white;">
+    <h2 style="color:#1e293b">📝 إنشاء حساب</h2>
+    <input type="text" id="registerName" placeholder="الاسم">
+    <input type="email" id="registerEmail" placeholder="البريد الإلكتروني">
+    <input type="password" id="registerPassword" placeholder="كلمة المرور">
+    <input type="password" id="registerConfirmPassword" placeholder="تأكيد">
+    <button id="registerBtn">إنشاء حساب</button>
+    <p>لديك حساب؟ <span id="showLogin">تسجيل الدخول</span></p>
+  </div>
+</div>
+
+<!-- واجهة التطبيق الرئيسية -->
+<div class="app hidden" id="app">
+  <!-- شريط علوي -->
+  <div class="top-nav">
+    <div class="logo">
+      <h1>📻 راديو نجوم</h1>
     </div>
-    <div class="glass-card auth-card hidden" id="registerCard">
-      <h2>📝 إنشاء حساب</h2>
-      <input type="text" id="registerName" placeholder="الاسم">
-      <input type="email" id="registerEmail" placeholder="البريد الإلكتروني">
-      <input type="password" id="registerPassword" placeholder="كلمة المرور">
-      <input type="password" id="registerConfirmPassword" placeholder="تأكيد كلمة المرور">
-      <button id="registerBtn">إنشاء حساب</button>
-      <p>لديك حساب؟ <span id="showLogin">تسجيل الدخول</span></p>
-    </div>
-  </div>
-
-  <div class="app hidden" id="app">
-    <aside class="sidebar">
-      <div>
-        <h1>📻 راديو نجوم</h1>
-        <button id="addRadioBtn">+ إضافة محطة</button>
-        <button id="toggleEditModeBtn" class="edit-mode-btn">✋ وضع الترتيب</button>
-        <input type="text" id="searchInput" placeholder="🔍 بحث عن محطة...">
-        <div class="menu">
-          <div class="menu-item active" data-filter="all">🏠 الرئيسية</div>
-          <div class="menu-item" data-filter="favorites">❤️ المفضلة</div>
-        </div>
+    <div class="nav-actions">
+      <!-- زر بحث صغير -->
+      <button class="icon-btn" id="searchBtn"><i class="fas fa-search"></i></button>
+      <!-- زر إضافة قناة -->
+      <button class="icon-btn" id="addRadioBtn"><i class="fas fa-plus"></i></button>
+      <!-- أيقونة المستخدم (بروفايل) -->
+      <div class="profile-trigger" id="profileTrigger">
+        <i class="fas fa-user"></i>
       </div>
-      <div>
-        <button id="profileBtn" class="profile-btn">👤 ملفي الشخصي</button>
-        <button id="logoutBtn" class="logout-btn">🚪 تسجيل الخروج</button>
-      </div>
-    </aside>
-    <main class="main-content">
-      <div class="topbar">
-        <h2 id="pageTitle">📻 جميع المحطات</h2>
-        <div class="view-options">
-          <button class="view-btn active" data-view="grid">📱 شبكي</button>
-          <button class="view-btn" data-view="vertical">📋 عمودي</button>
-          <button class="view-btn" data-view="circle">⚪ دائري</button>
-        </div>
-      </div>
-      <div id="radioGrid" class="radio-grid">
-        <div class="skeleton-card"></div>
-        <div class="skeleton-card"></div>
-        <div class="skeleton-card"></div>
-      </div>
-    </main>
-  </div>
-
-  <div class="profile-container hidden" id="profileContainer">
-    <div class="profile-card glass-card">
-      <img id="profileAvatar" class="profile-avatar" src="https://placehold.co/200x200/1e293b/22c55e?text=User" onclick="document.getElementById('profileImageInput').click()">
-      <input type="file" id="profileImageInput" accept="image/*" style="display:none">
-      <h2 id="profileName">اسم المستخدم</h2>
-      <p id="profileEmail">البريد الإلكتروني</p>
-      <input type="text" id="editNameInput" class="profile-input hidden" placeholder="الاسم الجديد">
-      <button id="editProfileBtn" class="edit-mode-btn" style="margin-bottom:10px">✏️ تعديل الاسم</button>
-      <button id="saveNameBtn" class="hidden" style="background:#22c55e; margin-bottom:10px">💾 حفظ التغييرات</button>
-      <button id="backToAppBtn" style="background:#475569; border-radius:16px;">🔙 العودة للتطبيق</button>
     </div>
   </div>
 
-  <div class="modal hidden" id="radioModal">
-    <div class="modal-content glass-card">
-      <h2 id="modalTitle">➕ محطة راديو جديدة</h2>
-      <input type="text" id="radioName" placeholder="اسم المحطة *">
-      <input type="text" id="radioUrl" placeholder="رابط البث المباشر * (مثل .mp3, .m3u8)">
-      <input type="text" id="radioCategory" placeholder="التصنيف (موسيقى, اخبار, رياضة)">
-      
-      <div class="image-upload-container" id="imageUploadArea">
-        <i class="fas fa-cloud-upload-alt" style="font-size: 32px; margin-bottom: 8px; display: block;"></i>
-        <span>📸 اضغط لرفع صورة المحطة</span>
-        <input type="file" id="radioImage" accept="image/*" style="display: none;">
+  <!-- Dropdown للمستخدم -->
+  <div class="user-dropdown hidden" id="userDropdown">
+    <div class="dropdown-header">
+      <img id="dropdownAvatar" src="https://placehold.co/100x100/e2e8f0/1e293b?text=User">
+      <h4 id="dropdownName">اسم المستخدم</h4>
+      <p id="dropdownEmail">البريد الإلكتروني</p>
+    </div>
+    <div class="dropdown-menu">
+      <div class="dropdown-item" data-nav="all">
+        <i class="fas fa-home"></i> <span>الرئيسية</span>
       </div>
-      
-      <div id="imagePreview" class="upload-preview hidden">
-        <img id="previewImg" src="">
-        <p style="font-size:12px; margin-top:5px;">✅ الصورة المرفوعة</p>
+      <div class="dropdown-item" data-nav="favorites">
+        <i class="fas fa-heart"></i> <span>المفضلة</span>
       </div>
-      <div id="uploadProgress" class="hidden" style="text-align: center; margin: 10px 0; color: #22c55e;">
-        <span class="upload-loading"></span> جاري رفع الصورة...
+      <div class="dropdown-item" id="editModeDropdown">
+        <i class="fas fa-arrows-alt"></i> <span>وضع الترتيب</span>
       </div>
-      
-      <button id="saveRadioBtn">💾 حفظ المحطة</button>
-      <button id="deleteFromModalBtn" class="hidden" style="background:#ef4444; margin-top:10px">🗑️ حذف المحطة</button>
-      <button id="closeModalBtn">❌ إلغاء</button>
+      <div class="dropdown-divider"></div>
+      <div class="dropdown-item" id="logoutBtn">
+        <i class="fas fa-sign-out-alt"></i> <span>تسجيل الخروج</span>
+      </div>
     </div>
   </div>
 
-  <div class="mini-player hidden" id="miniPlayer">
-    <div class="player-left">
-      <img id="playerImage" src="">
-      <div>
-        <h4 id="playerTitle">لا توجد محطة</h4>
-        <span>🎵 استمع الآن</span>
-      </div>
-    </div>
-    <div class="player-controls">
-      <button id="prevBtn">⏮</button>
-      <button id="playPauseBtn">▶</button>
-      <button id="nextBtn">⏭</button>
-    </div>
-    <div class="volume-wrapper">
-      🔊 <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.8">
-    </div>
+  <!-- شريط خيارات العرض -->
+  <div class="view-bar">
+    <button class="view-pill active" data-view="grid">شبكي</button>
+    <button class="view-pill" data-view="vertical">عمودي</button>
+    <button class="view-pill" data-view="circle">دائري</button>
   </div>
 
-  <script>
-    // 🔑 تكوين Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyBRvU198Ov7i6XdQTiKkuPJ-8biyKQt0Eo",
-      authDomain: "radioapp-4f31a.firebaseapp.com",
-      projectId: "radioapp-4f31a",
-      storageBucket: "radioapp-4f31a.firebasestorage.app",
-      messagingSenderId: "109582001862",
-      appId: "1:109582001862:web:0f88fc50166c6d3d3019c7"
-    };
+  <!-- حقل بحث مخفي يظهر عند الضغط على زر البحث -->
+  <div id="searchContainer" style="padding: 0 24px 12px 24px; display: none;">
+    <input type="text" id="searchInput" placeholder="🔍 ابحث عن محطة..." style="width:100%; padding:12px; border-radius:30px; border:1px solid #e2e8f0; background:white;">
+  </div>
 
-    // 🔑 تكوين Cloudinary
-    const CLOUDINARY_CLOUD_NAME = "dzshfcvkg";
-    const CLOUDINARY_UPLOAD_PRESET = "radio_preset";
-    
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    
-    let currentUser = null;
-    let radios = [];
-    let currentFilter = 'all';
-    let currentPlayingId = null;
-    let currentView = 'grid';
-    let editId = null;
-    let editMode = false;
-    let audio = new Audio();
-    audio.volume = 0.8;
-    let unsubscribeRadios = null;
-    let currentCloudinaryUrl = null;
-    let currentImageFile = null;
+  <!-- شبكة القنوات -->
+  <div id="radioGrid" class="radio-grid"></div>
+</div>
 
-    function updateLoadingStatus(msg, isError = false) {
-      const el = document.getElementById('loading-status');
-      if(el) { el.innerHTML = msg; el.style.color = isError ? '#ef4444' : 'rgba(255,255,255,0.8)'; }
-    }
-    
-    function hideSplash() {
-      const splash = document.getElementById('splash-screen');
-      if(splash) { splash.style.opacity = '0'; setTimeout(() => splash.remove(), 500); }
-    }
-    
-    function showToast(icon, title) {
-      Swal.fire({ toast: true, position: 'top-end', icon, title, showConfirmButton: false, timer: 3000, background: '#1e293b', color: '#fff' });
-    }
-    
-    function escapeHtml(str) {
-      if(!str) return '';
-      return str.replace(/[&<>]/g, function(m) { if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m; });
-    }
+<!-- مودال إضافة/تعديل -->
+<div class="modal hidden" id="radioModal">
+  <div class="modal-content">
+    <h2 id="modalTitle">➕ محطة جديدة</h2>
+    <input type="text" id="radioName" placeholder="اسم المحطة *">
+    <input type="text" id="radioUrl" placeholder="رابط البث *">
+    <input type="text" id="radioCategory" placeholder="التصنيف">
+    <div class="image-upload-area" id="imageUploadArea">
+      <i class="fas fa-cloud-upload-alt"></i> اضغط لرفع صورة
+      <input type="file" id="radioImage" accept="image/*" style="display:none">
+    </div>
+    <div id="imagePreview" class="upload-preview hidden"><img id="previewImg"></div>
+    <div id="uploadProgress" class="hidden" style="text-align:center; color:#22c55e;">جاري الرفع...</div>
+    <button id="saveRadioBtn" style="background:#22c55e; color:white;">💾 حفظ</button>
+    <button id="deleteFromModalBtn" class="hidden" style="background:#ef4444; color:white;">🗑️ حذف</button>
+    <button id="closeModalBtn" style="background:#94a3b8; color:white;">❌ إلغاء</button>
+  </div>
+</div>
 
-    async function uploadToCloudinary(file) {
-      return new Promise((resolve, reject) => {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-        
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, true);
-        
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            const percent = (e.loaded / e.total) * 100;
-            const progressDiv = document.getElementById('uploadProgress');
-            if(progressDiv) progressDiv.innerHTML = `<span class="upload-loading"></span> جاري رفع الصورة: ${Math.round(percent)}%`;
-          }
-        };
-        
-        xhr.onload = () => {
-          if (xhr.status === 200) {
-            const response = JSON.parse(xhr.responseText);
-            resolve(response.secure_url);
-          } else {
-            reject(new Error('فشل رفع الصورة'));
-          }
-        };
-        
-        xhr.onerror = () => reject(new Error('خطأ في الشبكة'));
-        xhr.send(formData);
+<div class="mini-player hidden" id="miniPlayer">
+  <div class="player-left">
+    <img id="playerImage" src="https://placehold.co/50x50/e2e8f0/1e293b">
+    <div><h4 id="playerTitle">لا توجد محطة</h4><span style="font-size:12px;">راديو مباشر</span></div>
+  </div>
+  <div class="player-controls">
+    <button id="prevBtn">⏮</button>
+    <button id="playPauseBtn">▶</button>
+    <button id="nextBtn">⏭</button>
+  </div>
+  <div class="volume-wrapper">🔊 <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.8"></div>
+</div>
+
+<script>
+  // Firebase + Cloudinary (نفس الإعدادات السابقة التي تعمل)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBRvU198Ov7i6XdQTiKkuPJ-8biyKQt0Eo",
+    authDomain: "radioapp-4f31a.firebaseapp.com",
+    projectId: "radioapp-4f31a",
+    storageBucket: "radioapp-4f31a.firebasestorage.app",
+    messagingSenderId: "109582001862",
+    appId: "1:109582001862:web:0f88fc50166c6d3d3019c7"
+  };
+  const CLOUDINARY_CLOUD_NAME = "dzshfcvkg";
+  const CLOUDINARY_UPLOAD_PRESET = "radio_preset";
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  let currentUser = null, radios = [], currentFilter = 'all', currentPlayingId = null, currentView = 'grid', editId = null, editMode = false;
+  let audio = new Audio(); audio.volume = 0.8;
+  let unsubscribeRadios = null;
+  let currentCloudinaryUrl = null, currentImageFile = null;
+
+  function showToast(icon, title) { Swal.fire({ toast: true, position: 'top-end', icon, title, showConfirmButton: false, timer: 3000, background: '#fff', color: '#1e293b' }); }
+  function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+  function hideSplash() { const s = document.getElementById('splash-screen'); if(s) s.style.opacity='0'; setTimeout(()=>s?.remove(),500); }
+
+  async function uploadToCloudinary(file) {
+    return new Promise((resolve, reject) => {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`);
+      xhr.onload = () => { if(xhr.status===200) resolve(JSON.parse(xhr.responseText).secure_url); else reject(); };
+      xhr.onerror = reject;
+      xhr.send(fd);
+    });
+  }
+
+  async function saveOrder() {
+    if(!currentUser || radios.length===0) return;
+    const order = radios.map(r=>r.id);
+    await db.collection('users').doc(currentUser.uid).collection('settings').doc('preferences').set({ order }, { merge: true });
+  }
+
+  function listenToRadios() {
+    if(unsubscribeRadios) unsubscribeRadios();
+    if(!currentUser) return;
+    unsubscribeRadios = db.collection('users').doc(currentUser.uid).collection('radios').orderBy('createdAt','desc').onSnapshot(async (snap)=>{
+      let savedOrder=[];
+      const prefs = await db.collection('users').doc(currentUser.uid).collection('settings').doc('preferences').get();
+      if(prefs.exists) savedOrder = prefs.data().order||[];
+      radios = [];
+      snap.forEach(d=>radios.push({id:d.id, ...d.data(), favorite: d.data().favorite||false}));
+      if(savedOrder.length) radios.sort((a,b)=>(savedOrder.indexOf(a.id)-savedOrder.indexOf(b.id)));
+      renderRadios();
+      hideSplash();
+    });
+  }
+
+  function renderRadios() {
+    const grid = document.getElementById('radioGrid');
+    let filtered = radios;
+    if(currentFilter==='favorites') filtered = radios.filter(r=>r.favorite);
+    if(filtered.length===0) { grid.innerHTML='<div class="empty-state">✨ لا توجد محطات، اضغط على + للإضافة</div>'; return; }
+    grid.innerHTML = filtered.map(radio=>`
+      <div class="radio-card ${editMode ? 'edit-mode' : ''}" data-id="${radio.id}" ${editMode ? 'draggable="true"' : ''}>
+        ${editMode ? '<div class="drag-handle"><i class="fas fa-arrows-alt"></i></div>' : ''}
+        <div class="menu-dots" onclick="event.stopPropagation(); openEditMenu('${radio.id}')"><i class="fas fa-ellipsis-v"></i></div>
+        <img src="${radio.imageUrl||'https://placehold.co/300x200/f1f5f9/1e293b?text=Radio'}" onerror="this.src='https://placehold.co/300x200/f1f5f9/1e293b?text=Radio'" ondblclick="event.stopPropagation(); toggleFavorite('${radio.id}')">
+        <h3>${escapeHtml(radio.name)}</h3>
+      </div>
+    `).join('');
+    document.querySelectorAll('.radio-card').forEach(card=>{
+      card.addEventListener('click',(e)=>{
+        if(!editMode && !e.target.closest('.menu-dots') && !e.target.closest('.drag-handle')) playRadio(card.dataset.id);
       });
-    }
+    });
+    if(editMode) enableDragDrop();
+  }
 
-    async function saveOrder() {
-      if(!currentUser || radios.length === 0) return;
-      const order = radios.map(r => r.id);
-      try {
-        await db.collection('users').doc(currentUser.uid).collection('settings').doc('preferences').set({ order }, { merge: true });
-      } catch(e) { console.error(e); }
-    }
-
-    function listenToRadios() {
-      if(unsubscribeRadios) unsubscribeRadios();
-      if(!currentUser) return;
-      
-      unsubscribeRadios = db.collection('users').doc(currentUser.uid).collection('radios')
-        .orderBy('createdAt', 'desc')
-        .onSnapshot(async (snapshot) => {
-          let savedOrder = [];
-          try {
-            const settingsDoc = await db.collection('users').doc(currentUser.uid).collection('settings').doc('preferences').get();
-            savedOrder = settingsDoc.exists ? settingsDoc.data().order : [];
-          } catch(e) {}
-          
-          radios = [];
-          snapshot.forEach(docSnap => {
-            let data = docSnap.data();
-            radios.push({ id: docSnap.id, ...data, favorite: data.favorite || false });
-          });
-          
-          if(savedOrder && savedOrder.length && radios.length) {
-            radios.sort((a,b) => {
-              const ia = savedOrder.indexOf(a.id);
-              const ib = savedOrder.indexOf(b.id);
-              if(ia === -1) return 1;
-              if(ib === -1) return -1;
-              return ia - ib;
-            });
+  function enableDragDrop() {
+    let dragSrc=null;
+    document.querySelectorAll('.radio-card').forEach(card=>{
+      card.addEventListener('dragstart',e=>{ dragSrc=card; e.dataTransfer.effectAllowed='move'; card.classList.add('dragging'); });
+      card.addEventListener('dragend',()=>card.classList.remove('dragging'));
+      card.addEventListener('dragover',e=>e.preventDefault());
+      card.addEventListener('drop',async e=>{
+        e.preventDefault();
+        if(dragSrc && dragSrc!==card){
+          const fromId=dragSrc.dataset.id, toId=card.dataset.id;
+          const fromIdx=radios.findIndex(r=>r.id==fromId), toIdx=radios.findIndex(r=>r.id==toId);
+          if(fromIdx!==-1 && toIdx!==-1){
+            const [moved]=radios.splice(fromIdx,1);
+            radios.splice(toIdx,0,moved);
+            renderRadios();
+            await saveOrder();
+            showToast('success','✓ تم تحديث الترتيب');
           }
-          
-          renderRadios();
-          updateLoadingStatus('جاهز', false);
-          hideSplash();
-        }, (error) => {
-          console.error(error);
-          showToast('error', 'خطأ في تحميل المحطات');
-        });
-    }
-
-    function renderRadios() {
-      const grid = document.getElementById('radioGrid');
-      let filtered = [...radios];
-      if(currentFilter === 'favorites') filtered = radios.filter(r => r.favorite === true);
-      
-      if(filtered.length === 0) {
-        if(currentFilter === 'favorites') {
-          grid.innerHTML = '<div class="empty-state"><i class="far fa-heart"></i><h3>لا توجد محطات مفضلة</h3><p>اضغط مرتين على صورة المحطة لإضافتها للمفضلة</p></div>';
-        } else {
-          grid.innerHTML = '<div class="empty-state"><i class="fas fa-radio"></i><h3>مرحباً بك في راديو نجوم</h3><p>اضغط على زر "إضافة محطة" لإضافة أول محطة راديو</p></div>';
-        }
-        return;
-      }
-      
-      grid.innerHTML = filtered.map(radio => `
-        <div class="radio-card ${editMode ? 'edit-mode' : ''}" data-id="${radio.id}" ${editMode ? 'draggable="true"' : ''}>
-          ${editMode ? '<div class="drag-handle"><i class="fas fa-arrows-alt"></i></div>' : ''}
-          <div class="menu-dots" onclick="event.stopPropagation(); openEditMenu('${radio.id}')">
-            <i class="fas fa-ellipsis-v"></i>
-          </div>
-          <img src="${radio.imageUrl || 'https://placehold.co/400x300/1e293b/22c55e?text=Radio'}" 
-               onerror="this.src='https://placehold.co/400x300/1e293b/22c55e?text=Radio'"
-               ondblclick="event.stopPropagation(); toggleFavorite('${radio.id}')">
-          <h3>${escapeHtml(radio.name)}</h3>
-        </div>
-      `).join('');
-      
-      document.querySelectorAll('.radio-card').forEach(card => {
-        card.addEventListener('click', (e) => {
-          if(!editMode && !e.target.closest('.menu-dots') && !e.target.closest('.drag-handle')) {
-            playRadio(card.dataset.id);
-          }
-        });
-      });
-      
-      if(editMode) {
-        enableDragAndDrop();
-      }
-    }
-
-    function enableDragAndDrop() {
-      let dragSrc = null;
-      const cards = document.querySelectorAll('.radio-card');
-      
-      cards.forEach(card => {
-        card.addEventListener('dragstart', (e) => {
-          dragSrc = card;
-          e.dataTransfer.effectAllowed = 'move';
-          card.classList.add('dragging');
-        });
-        
-        card.addEventListener('dragend', () => {
-          card.classList.remove('dragging');
-          dragSrc = null;
-        });
-        
-        card.addEventListener('dragover', (e) => {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'move';
-        });
-        
-        card.addEventListener('drop', async (e) => {
-          e.preventDefault();
-          if(dragSrc && dragSrc !== card) {
-            const fromId = dragSrc.dataset.id;
-            const toId = card.dataset.id;
-            const fromIndex = radios.findIndex(r => r.id == fromId);
-            const toIndex = radios.findIndex(r => r.id == toId);
-            
-            if(fromIndex !== -1 && toIndex !== -1) {
-              const [moved] = radios.splice(fromIndex, 1);
-              radios.splice(toIndex, 0, moved);
-              renderRadios();
-              await saveOrder();
-              showToast('success', '✓ تم تحديث ترتيب القنوات');
-            }
-          }
-        });
-      });
-    }
-
-    window.toggleFavorite = async function(id) {
-      if(!currentUser) return;
-      const station = radios.find(r => r.id == id);
-      if(!station) return;
-      const newFav = !station.favorite;
-      await db.collection('users').doc(currentUser.uid).collection('radios').doc(id).update({ favorite: newFav });
-      showToast('success', newFav ? '❤️ أضيفت إلى المفضلة' : '💔 أزيلت من المفضلة');
-    };
-
-    window.playRadio = function(id) {
-      const station = radios.find(r => r.id == id);
-      if(!station) return;
-      currentPlayingId = id;
-      audio.src = station.streamUrl;
-      audio.play().catch(e => { showToast('error', 'لا يمكن تشغيل البث'); });
-      document.getElementById('miniPlayer').classList.remove('hidden');
-      document.getElementById('playerTitle').innerText = station.name;
-      document.getElementById('playerImage').src = station.imageUrl || 'https://placehold.co/400x300/1e293b/22c55e?text=Radio';
-      document.getElementById('playPauseBtn').innerHTML = '⏸';
-      showToast('success', `🎵 تشغيل ${station.name}`);
-    };
-
-    window.openEditMenu = function(id) {
-      Swal.fire({
-        title: 'خيارات المحطة',
-        showCancelButton: true,
-        confirmButtonText: '✏️ تعديل',
-        cancelButtonText: '❌ إلغاء',
-        denyButtonText: '🗑️ حذف',
-        showDenyButton: true,
-        background: '#1e293b',
-        color: 'white'
-      }).then(async (result) => {
-        if(result.isConfirmed) {
-          editRadio(id);
-        } else if(result.isDenied) {
-          deleteRadio(id);
         }
       });
-    };
+    });
+  }
 
-    window.deleteRadio = async function(id) {
-      const result = await Swal.fire({ title: 'حذف المحطة؟', text: 'لا يمكن التراجع', icon: 'warning', showCancelButton: true, confirmButtonText: 'نعم', cancelButtonText: 'إلغاء' });
-      if(result.isConfirmed) {
-        await db.collection('users').doc(currentUser.uid).collection('radios').doc(id).delete();
-        showToast('success', 'تم الحذف');
-        if(currentPlayingId == id) { audio.pause(); document.getElementById('miniPlayer').classList.add('hidden'); }
-      }
-    };
+  window.toggleFavorite=async(id)=>{
+    const station=radios.find(r=>r.id==id);
+    const newFav=!station.favorite;
+    await db.collection('users').doc(currentUser.uid).collection('radios').doc(id).update({favorite:newFav});
+    showToast('success',newFav?'❤️ أضيفت للمفضلة':'💔 أزيلت');
+  };
+  window.playRadio=(id)=>{
+    const station=radios.find(r=>r.id==id);
+    if(!station) return;
+    currentPlayingId=id;
+    audio.src=station.streamUrl;
+    audio.play().catch(()=>showToast('error','لا يمكن التشغيل'));
+    document.getElementById('miniPlayer').classList.remove('hidden');
+    document.getElementById('playerTitle').innerText=station.name;
+    document.getElementById('playerImage').src=station.imageUrl||'https://placehold.co/50x50';
+    document.getElementById('playPauseBtn').innerHTML='⏸';
+    showToast('success',`🎵 تشغيل ${station.name}`);
+  };
+  window.openEditMenu=async(id)=>{
+    const res=await Swal.fire({title:'خيارات',showCancelButton:true,confirmButtonText:'✏️ تعديل',denyButtonText:'🗑️ حذف',showDenyButton:true});
+    if(res.isConfirmed) editRadio(id);
+    else if(res.isDenied) deleteRadio(id);
+  };
+  window.deleteRadio=async(id)=>{
+    const conf=await Swal.fire({title:'حذف؟',icon:'warning',showCancelButton:true});
+    if(conf.isConfirmed){
+      await db.collection('users').doc(currentUser.uid).collection('radios').doc(id).delete();
+      if(currentPlayingId==id){ audio.pause(); document.getElementById('miniPlayer').classList.add('hidden');}
+      showToast('success','تم الحذف');
+    }
+  };
+  window.editRadio=async(id)=>{
+    const radio=radios.find(r=>r.id==id);
+    editId=id;
+    document.getElementById('modalTitle').innerText='✏️ تعديل';
+    document.getElementById('radioName').value=radio.name;
+    document.getElementById('radioUrl').value=radio.streamUrl;
+    document.getElementById('radioCategory').value=radio.category||'';
+    currentCloudinaryUrl=radio.imageUrl;
+    currentImageFile=null;
+    if(currentCloudinaryUrl){
+      document.getElementById('imagePreview').classList.remove('hidden');
+      document.getElementById('previewImg').src=currentCloudinaryUrl;
+    }else document.getElementById('imagePreview').classList.add('hidden');
+    document.getElementById('deleteFromModalBtn').classList.remove('hidden');
+    document.getElementById('radioModal').classList.remove('hidden');
+  };
 
-    window.editRadio = async function(id) {
-      const radio = radios.find(r => r.id == id);
-      editId = id;
-      document.getElementById('modalTitle').innerText = '✏️ تعديل المحطة';
-      document.getElementById('radioName').value = radio.name;
-      document.getElementById('radioUrl').value = radio.streamUrl;
-      document.getElementById('radioCategory').value = radio.category || '';
-      currentCloudinaryUrl = radio.imageUrl;
-      currentImageFile = null;
-      if(currentCloudinaryUrl) {
-        document.getElementById('imagePreview').classList.remove('hidden');
-        document.getElementById('previewImg').src = currentCloudinaryUrl;
-      } else {
-        document.getElementById('imagePreview').classList.add('hidden');
-      }
-      document.getElementById('deleteFromModalBtn').classList.remove('hidden');
-      document.getElementById('radioModal').classList.remove('hidden');
-    };
-
-    // المصادقة
-    document.getElementById('registerBtn').onclick = async () => {
-      const name = document.getElementById('registerName').value;
-      const email = document.getElementById('registerEmail').value;
-      const password = document.getElementById('registerPassword').value;
-      const confirm = document.getElementById('registerConfirmPassword').value;
-      if(password !== confirm) return showToast('error', 'كلمتا المرور غير متطابقتين');
-      try {
-        const userCred = await auth.createUserWithEmailAndPassword(email, password);
-        await userCred.user.updateProfile({ displayName: name });
-        await userCred.user.sendEmailVerification();
-        showToast('success', 'تم التسجيل! راجع بريدك لتفعيل الحساب');
-        await auth.signOut();
-        document.getElementById('registerCard').classList.add('hidden');
-        document.getElementById('loginCard').classList.remove('hidden');
-      } catch(err) { showToast('error', err.message); }
-    };
-    
-    document.getElementById('loginBtn').onclick = async () => {
-      const email = document.getElementById('loginEmail').value;
-      const password = document.getElementById('loginPassword').value;
-      try {
-        const userCred = await auth.signInWithEmailAndPassword(email, password);
-        if(!userCred.user.emailVerified) {
-          await auth.signOut();
-          showToast('error', 'يرجى تأكيد بريدك الإلكتروني أولاً');
-        }
-      } catch(err) { showToast('error', 'البريد أو كلمة المرور خاطئة'); }
-    };
-    
-    document.getElementById('googleLoginBtn').onclick = async () => {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      try {
-        await auth.signInWithPopup(provider);
-      } catch(err) { showToast('error', err.message); }
-    };
-    
-    document.getElementById('showRegister').onclick = () => {
-      document.getElementById('loginCard').classList.add('hidden');
-      document.getElementById('registerCard').classList.remove('hidden');
-    };
-    
-    document.getElementById('showLogin').onclick = () => {
+  // أحداث الشاشة
+  document.getElementById('registerBtn').onclick=async()=>{
+    const name=document.getElementById('registerName').value, email=document.getElementById('registerEmail').value, pwd=document.getElementById('registerPassword').value, conf=document.getElementById('registerConfirmPassword').value;
+    if(pwd!==conf) return showToast('error','كلمة المرور غير متطابقة');
+    try{
+      const uc=await auth.createUserWithEmailAndPassword(email,pwd);
+      await uc.user.updateProfile({displayName:name});
+      await uc.user.sendEmailVerification();
+      showToast('success','تم التسجيل! راجع بريدك لتفعيل الحساب');
+      await auth.signOut();
       document.getElementById('registerCard').classList.add('hidden');
       document.getElementById('loginCard').classList.remove('hidden');
-    };
-    
-    document.getElementById('logoutBtn').onclick = async () => {
-      await auth.signOut();
-      audio.pause();
-      document.getElementById('miniPlayer').classList.add('hidden');
-    };
+    }catch(e){ showToast('error',e.message); }
+  };
+  document.getElementById('loginBtn').onclick=async()=>{
+    const email=document.getElementById('loginEmail').value, pwd=document.getElementById('loginPassword').value;
+    try{
+      const uc=await auth.signInWithEmailAndPassword(email,pwd);
+      if(!uc.user.emailVerified){ await auth.signOut(); showToast('error','يرجى تأكيد البريد'); }
+    }catch(e){ showToast('error','بيانات غير صحيحة'); }
+  };
+  document.getElementById('googleLoginBtn').onclick=async()=>{ try{ await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }catch(e){ showToast('error',e.message); } };
+  document.getElementById('showRegister').onclick=()=>{ document.getElementById('loginCard').classList.add('hidden'); document.getElementById('registerCard').classList.remove('hidden'); };
+  document.getElementById('showLogin').onclick=()=>{ document.getElementById('registerCard').classList.add('hidden'); document.getElementById('loginCard').classList.remove('hidden'); };
+  document.getElementById('logoutBtn').onclick=async()=>{ await auth.signOut(); audio.pause(); document.getElementById('miniPlayer').classList.add('hidden'); };
 
-    // رفع الصورة
-    const imageUploadArea = document.getElementById('imageUploadArea');
-    const imageInput = document.getElementById('radioImage');
-    
-    if(imageUploadArea) {
-      imageUploadArea.onclick = () => imageInput.click();
-    }
-    
-    imageInput.onchange = async (e) => {
-      const file = e.target.files[0];
-      if(!file) return;
-      
-      if(!file.type.startsWith('image/')) {
-        showToast('error', 'الرجاء اختيار ملف صورة صالح');
-        return;
-      }
-      
-      if(file.size > 5 * 1024 * 1024) {
-        showToast('error', 'حجم الصورة يجب أن لا يتجاوز 5 ميجابايت');
-        return;
-      }
-      
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        document.getElementById('imagePreview').classList.remove('hidden');
-        document.getElementById('previewImg').src = ev.target.result;
-      };
-      reader.readAsDataURL(file);
-      
+  // UI elements
+  const addBtn = document.getElementById('addRadioBtn');
+  const searchBtn = document.getElementById('searchBtn');
+  const searchContainer = document.getElementById('searchContainer');
+  const searchInput = document.getElementById('searchInput');
+  searchBtn.onclick = ()=>{ searchContainer.style.display = searchContainer.style.display==='none'?'block':'none'; if(searchContainer.style.display==='block') searchInput.focus(); };
+  searchInput.oninput = (e)=>{
+    const val = e.target.value.toLowerCase();
+    document.querySelectorAll('.radio-card').forEach(c=>{
+      const title = c.querySelector('h3')?.innerText.toLowerCase()||'';
+      c.style.display = title.includes(val)?'':'none';
+    });
+  };
+  addBtn.onclick = ()=>{
+    editId=null;
+    document.getElementById('modalTitle').innerText='➕ محطة جديدة';
+    document.getElementById('radioName').value='';
+    document.getElementById('radioUrl').value='';
+    document.getElementById('radioCategory').value='';
+    currentCloudinaryUrl=null; currentImageFile=null;
+    document.getElementById('imagePreview').classList.add('hidden');
+    document.getElementById('deleteFromModalBtn').classList.add('hidden');
+    document.getElementById('radioModal').classList.remove('hidden');
+  };
+  document.getElementById('saveRadioBtn').onclick=async()=>{
+    const name=document.getElementById('radioName').value.trim(), url=document.getElementById('radioUrl').value.trim();
+    if(!name || !url) return showToast('warning','املأ الحقول');
+    let img=currentCloudinaryUrl;
+    if(currentImageFile){
       document.getElementById('uploadProgress').classList.remove('hidden');
-      
-      try {
-        const imageUrl = await uploadToCloudinary(file);
-        currentCloudinaryUrl = imageUrl;
-        currentImageFile = file;
-        document.getElementById('uploadProgress').classList.add('hidden');
-        showToast('success', 'تم رفع الصورة بنجاح');
-      } catch(error) {
-        document.getElementById('uploadProgress').classList.add('hidden');
-        showToast('error', 'فشل رفع الصورة، تأكد من إعدادات Cloudinary');
-        document.getElementById('imagePreview').classList.add('hidden');
-        currentCloudinaryUrl = null;
-      }
-    };
-
-    // حفظ المحطة
-    document.getElementById('saveRadioBtn').onclick = async () => {
-      if(!currentUser) return;
-      const name = document.getElementById('radioName').value.trim();
-      const streamUrl = document.getElementById('radioUrl').value.trim();
-      if(!name || !streamUrl) return showToast('warning', 'الاسم ورابط البث مطلوبة');
-      
-      const imageUrl = currentCloudinaryUrl || null;
-      const category = document.getElementById('radioCategory').value.trim() || 'عام';
-      
-      const saveBtn = document.getElementById('saveRadioBtn');
-      saveBtn.disabled = true;
-      saveBtn.innerText = '⏳ جاري الحفظ...';
-      
-      try {
-        const data = { name, streamUrl, category, imageUrl, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
-        
-        if(editId) {
-          await db.collection('users').doc(currentUser.uid).collection('radios').doc(editId).update(data);
-          showToast('success', '✓ تم تعديل المحطة');
-        } else {
-          data.favorite = false;
-          data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-          await db.collection('users').doc(currentUser.uid).collection('radios').add(data);
-          showToast('success', '✓ تم إضافة المحطة');
-        }
-        
-        document.getElementById('radioModal').classList.add('hidden');
-        resetModalForm();
-      } catch(error) {
-        showToast('error', 'حدث خطأ أثناء حفظ المحطة');
-      } finally {
-        saveBtn.disabled = false;
-        saveBtn.innerText = '💾 حفظ المحطة';
-      }
-    };
-
-    document.getElementById('deleteFromModalBtn').onclick = async () => {
-      if(editId) {
-        await window.deleteRadio(editId);
-        document.getElementById('radioModal').classList.add('hidden');
-        resetModalForm();
-      }
-    };
-    
-    function resetModalForm() {
-      editId = null;
-      document.getElementById('modalTitle').innerText = '➕ محطة راديو جديدة';
-      document.getElementById('radioName').value = '';
-      document.getElementById('radioUrl').value = '';
-      document.getElementById('radioCategory').value = '';
-      currentCloudinaryUrl = null;
-      currentImageFile = null;
-      document.getElementById('imagePreview').classList.add('hidden');
-      document.getElementById('deleteFromModalBtn').classList.add('hidden');
+      try{ img = await uploadToCloudinary(currentImageFile); }catch(e){ document.getElementById('uploadProgress').classList.add('hidden'); showToast('error','فشل رفع الصورة'); return; }
+      document.getElementById('uploadProgress').classList.add('hidden');
     }
-    
-    document.getElementById('addRadioBtn').onclick = () => {
-      resetModalForm();
-      document.getElementById('radioModal').classList.remove('hidden');
-    };
-    
-    document.getElementById('closeModalBtn').onclick = () => {
-      document.getElementById('radioModal').classList.add('hidden');
-      resetModalForm();
-    };
+    const data={ name, streamUrl:url, category:document.getElementById('radioCategory').value.trim()||'عام', imageUrl:img, updatedAt:firebase.firestore.FieldValue.serverTimestamp() };
+    if(editId) await db.collection('users').doc(currentUser.uid).collection('radios').doc(editId).update(data);
+    else { data.favorite=false; data.createdAt=firebase.firestore.FieldValue.serverTimestamp(); await db.collection('users').doc(currentUser.uid).collection('radios').add(data); }
+    showToast('success',editId?'تم التعديل':'تمت الإضافة');
+    document.getElementById('radioModal').classList.add('hidden');
+  };
+  document.getElementById('deleteFromModalBtn').onclick=async()=>{ if(editId){ await window.deleteRadio(editId); document.getElementById('radioModal').classList.add('hidden'); } };
+  document.getElementById('closeModalBtn').onclick=()=>document.getElementById('radioModal').classList.add('hidden');
 
-    // الملف الشخصي
-    async function loadProfile() {
-      if(!currentUser) return;
-      document.getElementById('profileName').innerText = currentUser.displayName || 'مستخدم';
-      document.getElementById('profileEmail').innerText = currentUser.email;
-      const userDoc = await db.collection('users').doc(currentUser.uid).collection('settings').doc('profile').get();
-      if(userDoc.exists && userDoc.data().avatarUrl) {
-        document.getElementById('profileAvatar').src = userDoc.data().avatarUrl;
-      }
-    }
+  // Image upload UI
+  const uploadArea=document.getElementById('imageUploadArea'), imgInput=document.getElementById('radioImage');
+  uploadArea.onclick=()=>imgInput.click();
+  imgInput.onchange=async(e)=>{
+    const file=e.target.files[0];
+    if(file && file.type.startsWith('image/') && file.size<=5*1024*1024){
+      currentImageFile=file;
+      const reader=new FileReader();
+      reader.onload=ev=>{ document.getElementById('imagePreview').classList.remove('hidden'); document.getElementById('previewImg').src=ev.target.result; };
+      reader.readAsDataURL(file);
+    }else showToast('error','صورة فقط وحتى 5MB');
+  };
 
-    async function updateProfileName(newName) {
-      await currentUser.updateProfile({ displayName: newName });
-      await db.collection('users').doc(currentUser.uid).collection('settings').doc('profile').set({ name: newName }, { merge: true });
-      showToast('success', 'تم تحديث الاسم');
-      loadProfile();
-    }
-
-    async function updateProfileAvatar(file) {
-      try {
-        const url = await uploadToCloudinary(file);
-        await db.collection('users').doc(currentUser.uid).collection('settings').doc('profile').set({ avatarUrl: url }, { merge: true });
-        document.getElementById('profileAvatar').src = url;
-        showToast('success', 'تم تحديث الصورة الشخصية');
-      } catch(err) {
-        showToast('error', 'فشل رفع الصورة');
-      }
-    }
-
-    document.getElementById('profileBtn').onclick = async () => {
-      await loadProfile();
-      document.getElementById('app').classList.add('hidden');
-      document.getElementById('profileContainer').classList.remove('hidden');
+  // User dropdown
+  const profileTrigger=document.getElementById('profileTrigger');
+  const userDropdown=document.getElementById('userDropdown');
+  profileTrigger.onclick=()=>{ userDropdown.classList.toggle('hidden'); };
+  document.addEventListener('click',(e)=>{ if(!profileTrigger.contains(e.target) && !userDropdown.contains(e.target)) userDropdown.classList.add('hidden'); });
+  // ملء بيانات dropdown
+  async function updateDropdown(){
+    if(!currentUser) return;
+    document.getElementById('dropdownName').innerText=currentUser.displayName||'مستخدم';
+    document.getElementById('dropdownEmail').innerText=currentUser.email;
+    const profileDoc = await db.collection('users').doc(currentUser.uid).collection('settings').doc('profile').get();
+    if(profileDoc.exists && profileDoc.data().avatarUrl) document.getElementById('dropdownAvatar').src=profileDoc.data().avatarUrl;
+    else document.getElementById('dropdownAvatar').src='https://placehold.co/100x100/e2e8f0/1e293b?text=User';
+  }
+  // التنقل عبر dropdown
+  document.querySelectorAll('.dropdown-item[data-nav]').forEach(item=>{
+    item.onclick=()=>{
+      const filter=item.dataset.nav;
+      currentFilter=filter;
+      renderRadios();
+      document.getElementById('pageTitle').innerText= filter==='all'?'📻 الرئيسية':'❤️ المفضلة';
+      userDropdown.classList.add('hidden');
     };
-
-    document.getElementById('backToAppBtn').onclick = () => {
-      document.getElementById('profileContainer').classList.add('hidden');
-      document.getElementById('app').classList.remove('hidden');
-    };
-
-    document.getElementById('editProfileBtn').onclick = () => {
-      document.getElementById('editNameInput').classList.remove('hidden');
-      document.getElementById('editNameInput').value = currentUser.displayName || '';
-      document.getElementById('editProfileBtn').classList.add('hidden');
-      document.getElementById('saveNameBtn').classList.remove('hidden');
-    };
-
-    document.getElementById('saveNameBtn').onclick = async () => {
-      const newName = document.getElementById('editNameInput').value.trim();
-      if(newName) {
-        await updateProfileName(newName);
-        document.getElementById('editNameInput').classList.add('hidden');
-        document.getElementById('editProfileBtn').classList.remove('hidden');
-        document.getElementById('saveNameBtn').classList.add('hidden');
-      }
-    };
-
-    document.getElementById('profileImageInput').onchange = async (e) => {
-      const file = e.target.files[0];
-      if(file) await updateProfileAvatar(file);
-    };
-
-    // تحكمات المشغل
-    document.getElementById('playPauseBtn').onclick = () => {
-      if(audio.paused) { audio.play(); document.getElementById('playPauseBtn').innerHTML = '⏸'; }
-      else { audio.pause(); document.getElementById('playPauseBtn').innerHTML = '▶'; }
-    };
-    
-    document.getElementById('prevBtn').onclick = () => {
-      if(radios.length && currentPlayingId) {
-        let idx = radios.findIndex(r => r.id == currentPlayingId);
-        idx = (idx - 1 + radios.length) % radios.length;
-        window.playRadio(radios[idx].id);
-      }
-    };
-    
-    document.getElementById('nextBtn').onclick = () => {
-      if(radios.length && currentPlayingId) {
-        let idx = radios.findIndex(r => r.id == currentPlayingId);
-        idx = (idx + 1) % radios.length;
-        window.playRadio(radios[idx].id);
-      }
-    };
-    
-    document.getElementById('volumeSlider').oninput = (e) => audio.volume = e.target.value;
-    
-    document.getElementById('searchInput').oninput = (e) => {
-      const val = e.target.value.toLowerCase();
-      document.querySelectorAll('.radio-card').forEach(card => {
-        const title = card.querySelector('h3')?.innerText.toLowerCase() || '';
-        card.style.display = title.includes(val) ? '' : 'none';
-      });
-    };
-    
-    document.getElementById('toggleEditModeBtn').onclick = () => {
-      editMode = !editMode;
-      const btn = document.getElementById('toggleEditModeBtn');
-      if(editMode) {
-        btn.style.background = '#22c55e';
-        btn.innerHTML = '✓ إنهاء الترتيب';
-        showToast('info', 'وضع الترتيب: اسحب القنوات لتغيير ترتيبها');
-      } else {
-        btn.style.background = '#f59e0b';
-        btn.innerHTML = '✋ وضع الترتيب';
-      }
+  });
+  document.getElementById('editModeDropdown').onclick=()=>{
+    editMode=!editMode;
+    const btn=document.getElementById('editModeDropdown');
+    btn.innerHTML = editMode ? '<i class="fas fa-check"></i> <span>إنهاء الترتيب</span>' : '<i class="fas fa-arrows-alt"></i> <span>وضع الترتيب</span>';
+    renderRadios();
+    userDropdown.classList.add('hidden');
+    showToast('info',editMode?'اسحب القنوات لإعادة الترتيب':'تم الخروج من وضع الترتيب');
+  };
+  // أزرار العرض
+  document.querySelectorAll('.view-pill').forEach(btn=>{
+    btn.onclick=()=>{
+      document.querySelectorAll('.view-pill').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentView=btn.dataset.view;
+      const appDiv=document.getElementById('app');
+      appDiv.classList.remove('vertical-view','circle-view');
+      if(currentView==='vertical') appDiv.classList.add('vertical-view');
+      else if(currentView==='circle') appDiv.classList.add('circle-view');
       renderRadios();
     };
-    
-    document.querySelectorAll('.view-btn').forEach(btn => {
-      btn.onclick = () => {
-        document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentView = btn.dataset.view;
-        const appDiv = document.getElementById('app');
-        appDiv.classList.remove('vertical-view', 'circle-view');
-        if(currentView === 'vertical') appDiv.classList.add('vertical-view');
-        else if(currentView === 'circle') appDiv.classList.add('circle-view');
-        renderRadios();
-      };
-    });
-    
-    document.querySelectorAll('.menu-item').forEach(item => {
-      item.onclick = () => {
-        document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
-        item.classList.add('active');
-        currentFilter = item.dataset.filter;
-        renderRadios();
-        const titles = { all: '📻 جميع المحطات', favorites: '❤️ المفضلة' };
-        document.getElementById('pageTitle').innerText = titles[currentFilter] || '📻 جميع المحطات';
-      };
-    });
+  });
 
-    auth.onAuthStateChanged(async (user) => {
-      if(user && user.emailVerified) {
-        currentUser = user;
-        document.getElementById('authContainer').classList.add('hidden');
-        document.getElementById('app').classList.remove('hidden');
-        if(unsubscribeRadios) unsubscribeRadios();
-        listenToRadios();
-        loadProfile();
-        showToast('success', `مرحباً ${user.displayName || user.email}`);
-        hideSplash();
-      } else if(user && !user.emailVerified) {
-        await auth.signOut();
-        document.getElementById('authContainer').classList.remove('hidden');
-        document.getElementById('app').classList.add('hidden');
-        hideSplash();
-        showToast('warning', 'يرجى تأكيد بريدك الإلكتروني');
-      } else {
-        if(unsubscribeRadios) unsubscribeRadios();
-        currentUser = null;
-        radios = [];
-        document.getElementById('app').classList.add('hidden');
-        document.getElementById('profileContainer').classList.add('hidden');
-        document.getElementById('authContainer').classList.remove('hidden');
-        document.getElementById('miniPlayer').classList.add('hidden');
-        if(audio) audio.pause();
-        hideSplash();
-      }
-    });
-    
-    setTimeout(() => {
-      if(!currentUser && !document.getElementById('authContainer').classList.contains('hidden')) {
-        hideSplash();
-      }
-    }, 3000);
-  </script>
+  // مشغل
+  document.getElementById('playPauseBtn').onclick=()=>{ if(audio.paused){ audio.play(); document.getElementById('playPauseBtn').innerHTML='⏸'; }else{ audio.pause(); document.getElementById('playPauseBtn').innerHTML='▶'; } };
+  document.getElementById('prevBtn').onclick=()=>{ if(radios.length && currentPlayingId){ let idx=radios.findIndex(r=>r.id==currentPlayingId); idx=(idx-1+radios.length)%radios.length; playRadio(radios[idx].id); } };
+  document.getElementById('nextBtn').onclick=()=>{ if(radios.length && currentPlayingId){ let idx=radios.findIndex(r=>r.id==currentPlayingId); idx=(idx+1)%radios.length; playRadio(radios[idx].id); } };
+  document.getElementById('volumeSlider').oninput=e=>audio.volume=e.target.value;
+
+  // مصادقة
+  auth.onAuthStateChanged(async(user)=>{
+    if(user && user.emailVerified){
+      currentUser=user;
+      document.getElementById('authContainer').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      await updateDropdown();
+      listenToRadios();
+      hideSplash();
+    }else if(user && !user.emailVerified){
+      await auth.signOut();
+      document.getElementById('authContainer').classList.remove('hidden');
+      document.getElementById('app').classList.add('hidden');
+      hideSplash();
+      showToast('warning','يرجى تأكيد البريد الإلكتروني');
+    }else{
+      currentUser=null;
+      document.getElementById('app').classList.add('hidden');
+      document.getElementById('authContainer').classList.remove('hidden');
+      document.getElementById('miniPlayer').classList.add('hidden');
+      if(audio) audio.pause();
+      hideSplash();
+    }
+  });
+  setTimeout(hideSplash, 3000);
+</script>
 </body>
 </html>
