@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>راديو سحابي | Firebase</title>
+  <title>راديو سحابي | Cloudinary + Firebase</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
   
-  <!-- Firebase SDKs (النسخة المستقرة) -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
   
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
@@ -98,6 +98,7 @@
     @media (max-width: 768px) { .app { flex-direction: column; } .sidebar { width: 100%; height: auto; position: relative; } .mini-player { flex-direction: column; height: auto; gap: 10px; padding: 15px; } }
     .upload-preview { margin: 10px 0; text-align: center; }
     .upload-preview img { max-width: 80px; border-radius: 12px; }
+    .cloudinary-upload-btn { background: linear-gradient(135deg, #3448C5, #1E2A6E) !important; color: white !important; margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -153,16 +154,23 @@
     </main>
   </div>
 
-  <!-- modal اضافة المحطات -->
+  <!-- modal اضافة المحطات مع Cloudinary -->
   <div class="modal hidden" id="radioModal">
     <div class="modal-content glass-card">
       <h2>➕ محطة راديو جديدة</h2>
       <input type="text" id="radioName" placeholder="اسم المحطة *">
       <input type="text" id="radioUrl" placeholder="رابط البث المباشر * (مثل .mp3, .m3u8)">
       <input type="text" id="radioCategory" placeholder="التصنيف (موسيقى, اخبار, رياضة)">
-      <input type="file" id="radioImage" accept="image/*">
-      <div id="imagePreview" class="upload-preview hidden"><img id="previewImg" src=""></div>
-      <button id="saveRadioBtn">💾 حفظ</button>
+      
+      <!-- Cloudinary Upload Widget -->
+      <button id="uploadCloudinaryBtn" class="cloudinary-upload-btn"><i class="fab fa-cloudinary"></i> رفع صورة من Cloudinary</button>
+      <div id="imagePreview" class="upload-preview hidden">
+        <img id="previewImg" src="">
+        <p style="font-size:12px; margin-top:5px;">الصورة المرفوعة</p>
+      </div>
+      <input type="hidden" id="cloudinaryImageUrl">
+      
+      <button id="saveRadioBtn">💾 حفظ المحطة</button>
       <button id="closeModalBtn">❌ إلغاء</button>
     </div>
   </div>
@@ -186,7 +194,7 @@
   </div>
 
   <script>
-    // تكوين Firebase
+    // 🔑 تكوين Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyBRvU198Ov7i6XdQTiKkuPJ-8biyKQt0Eo",
       authDomain: "radioapp-4f31a.firebaseapp.com",
@@ -196,11 +204,15 @@
       appId: "1:109582001862:web:0f88fc50166c6d3d3019c7"
     };
 
+    // 🔑 تكوين Cloudinary - استبدل هذه البيانات ببيانات حسابك من cloudinary.com
+    // سجل مجاناً على https://cloudinary.com وأضف بياناتك هنا
+    const CLOUDINARY_CLOUD_NAME = "dzshfcvkg"; // استبدل باسم السحابة الخاص بك
+    const CLOUDINARY_UPLOAD_PRESET = "radio_preset"; // ستحتاج لإنشاء upload preset في لوحة التحكم
+    
     // تهيئة Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
-    const storage = firebase.storage();
     
     // المتغيرات العامة
     let currentUser = null;
@@ -210,7 +222,7 @@
     let audio = new Audio();
     audio.volume = 0.8;
     let unsubscribeRadios = null;
-    let selectedImageFile = null;
+    let currentCloudinaryUrl = null;
 
     function updateLoadingStatus(msg, isError = false) {
       const el = document.getElementById('loading-status');
@@ -229,6 +241,58 @@
     function escapeHtml(str) {
       if(!str) return '';
       return str.replace(/[&<>]/g, function(m) { if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m; });
+    }
+
+    // تهيئة Cloudinary Upload Widget
+    function initCloudinaryWidget() {
+      if (!CLOUDINARY_CLOUD_NAME || CLOUDINARY_CLOUD_NAME === "YOUR_CLOUD_NAME") {
+        console.warn("⚠️ يرجى إدخال بيانات Cloudinary الصحيحة في الكود");
+        document.getElementById('uploadCloudinaryBtn').style.opacity = '0.5';
+        document.getElementById('uploadCloudinaryBtn').title = 'يرجى إعداد Cloudinary أولاً';
+        return;
+      }
+      
+      const uploadButton = document.getElementById('uploadCloudinaryBtn');
+      uploadButton.onclick = () => {
+        cloudinary.openUploadWidget({
+          cloudName: CLOUDINARY_CLOUD_NAME,
+          uploadPreset: CLOUDINARY_UPLOAD_PRESET,
+          sources: ['local', 'url', 'camera'],
+          cropping: true,
+          multiple: false,
+          maxFileSize: 5000000, // 5MB
+          clientAllowedFormats: ['image/*'],
+          showAdvancedOptions: false,
+          styles: {
+            palette: {
+              window: "#0f172a",
+              windowBorder: "#22c55e",
+              tabIcon: "#22c55e",
+              menuIcons: "#22c55e",
+              textDark: "#ffffff",
+              textLight: "#ffffff",
+              link: "#22c55e",
+              action: "#22c55e",
+              inactiveTabIcon: "#64748b",
+              error: "#ef4444",
+              inProgress: "#3b82f6",
+              complete: "#22c55e"
+            }
+          }
+        }, (error, result) => {
+          if (error) {
+            console.error("خطأ في الرفع:", error);
+            showToast('error', 'فشل رفع الصورة');
+          } else if (result && result.event === "success") {
+            const imageUrl = result.info.secure_url;
+            currentCloudinaryUrl = imageUrl;
+            document.getElementById('cloudinaryImageUrl').value = imageUrl;
+            document.getElementById('imagePreview').classList.remove('hidden');
+            document.getElementById('previewImg').src = imageUrl;
+            showToast('success', 'تم رفع الصورة بنجاح');
+          }
+        });
+      };
     }
 
     // الاستماع للمحطات من Firestore
@@ -261,7 +325,7 @@
         filtered = recentIds.map(id => radios.find(r => r.id == id)).filter(Boolean);
       }
       if(filtered.length === 0) {
-        grid.innerHTML = '<div class="empty-state"><i class="fas fa-radio" style="font-size:48px"></i><h3>لا توجد محطات</h3><p>أضف محطتك الأولى الآن</p></div>';
+        grid.innerHTML = '<div class="empty-state"><i class="fas fa-radio" style="font-size:48px"></i><h3>لا توجد محطات</h3><p>أضف محطتك الأولى الآن</p><p style="font-size:12px; margin-top:10px;">يمكنك إضافة صورة عبر Cloudinary</p></div>';
         return;
       }
       grid.innerHTML = filtered.map(radio => `
@@ -310,13 +374,6 @@
     window.deleteRadio = async function(id) {
       const result = await Swal.fire({ title: 'حذف المحطة؟', text: 'لا يمكن التراجع', icon: 'warning', showCancelButton: true, confirmButtonText: 'نعم', cancelButtonText: 'إلغاء' });
       if(result.isConfirmed) {
-        const radio = radios.find(r => r.id == id);
-        if(radio && radio.imageUrl && radio.imageUrl.includes('firebasestorage')) {
-          try {
-            const imageRef = storage.refFromURL(radio.imageUrl);
-            await imageRef.delete();
-          } catch(e) {}
-        }
         await db.collection('radios').doc(id).delete();
         showToast('success', 'تم الحذف');
         if(currentPlayingId == id) { audio.pause(); audio.src = ''; document.getElementById('miniPlayer').classList.add('hidden'); }
@@ -391,38 +448,19 @@
       document.getElementById('miniPlayer').classList.add('hidden');
     };
 
-    // اضافة محطة مع رفع صورة
-    document.getElementById('radioImage').addEventListener('change', (e) => {
-      if(e.target.files.length) {
-        selectedImageFile = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          document.getElementById('imagePreview').classList.remove('hidden');
-          document.getElementById('previewImg').src = ev.target.result;
-        };
-        reader.readAsDataURL(selectedImageFile);
-      } else { selectedImageFile = null; document.getElementById('imagePreview').classList.add('hidden'); }
-    });
-    
+    // حفظ المحطة مع رابط الصورة من Cloudinary
     document.getElementById('saveRadioBtn').onclick = async () => {
       const name = document.getElementById('radioName').value.trim();
       const streamUrl = document.getElementById('radioUrl').value.trim();
       if(!name || !streamUrl) return showToast('warning', 'الاسم ورابط البث مطلوبة');
       
-      let imageUrl = null;
-      if(selectedImageFile) {
-        const ext = selectedImageFile.name.split('.').pop();
-        const storagePath = `radio-images/${Date.now()}_${Math.random().toString(36)}.${ext}`;
-        const storageRef = storage.ref(storagePath);
-        await storageRef.put(selectedImageFile);
-        imageUrl = await storageRef.getDownloadURL();
-      }
+      const imageUrl = currentCloudinaryUrl || null;
       
       await db.collection('radios').add({
         name, 
         streamUrl, 
         category: document.getElementById('radioCategory').value.trim() || 'عام',
-        imageUrl: imageUrl || null, 
+        imageUrl: imageUrl, 
         favorite: false, 
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -432,12 +470,16 @@
       document.getElementById('radioName').value = ''; 
       document.getElementById('radioUrl').value = '';
       document.getElementById('radioCategory').value = ''; 
-      document.getElementById('radioImage').value = '';
-      selectedImageFile = null; 
+      document.getElementById('cloudinaryImageUrl').value = '';
+      currentCloudinaryUrl = null;
       document.getElementById('imagePreview').classList.add('hidden');
     };
     
-    document.getElementById('addRadioBtn').onclick = () => document.getElementById('radioModal').classList.remove('hidden');
+    document.getElementById('addRadioBtn').onclick = () => {
+      currentCloudinaryUrl = null;
+      document.getElementById('imagePreview').classList.add('hidden');
+      document.getElementById('radioModal').classList.remove('hidden');
+    };
     document.getElementById('closeModalBtn').onclick = () => document.getElementById('radioModal').classList.add('hidden');
 
     // تحكمات المشغل
@@ -504,7 +546,9 @@
       }
     });
     
-    // اظهار الشاشة الرئيسية بعد 3 ثواني كحد اقصى
+    // تهيئة Cloudinary Widget
+    initCloudinaryWidget();
+    
     setTimeout(() => {
       if(!currentUser && !document.getElementById('authContainer').classList.contains('hidden')) {
         hideSplash();
