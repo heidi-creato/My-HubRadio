@@ -403,19 +403,28 @@
     showToast(newFav ? '❤️ أضيفت للمفضلة' : '💔 أزيلت من المفضلة');
   };
 
-  // ---------- Play radio with retry ----------
-  function attemptReconnect(stationUrl) {
-    if (retryCount >= 3) {
-      showToast('❌ فشل الاتصال بعد 3 محاولات، تحقق من الرابط');
-      retryCount = 0;
-      return;
+  // ---------- Improved play with retry and URL encoding ----------
+  function attemptPlay(url, retriesLeft = 3) {
+    let cleanUrl;
+    try {
+      cleanUrl = encodeURI(url); // ترميز الأحرف الخاصة مثل ; : /؟ إلخ
+    } catch(e) {
+      cleanUrl = url;
     }
-    retryCount++;
-    showToast(`⚠️ محاولة إعادة الاتصال (${retryCount}/3)...`);
-    audio.src = stationUrl;
+    audio.src = cleanUrl;
     audio.load();
-    audio.play().catch(() => {
-      retryTimer = setTimeout(() => attemptReconnect(stationUrl), 5000);
+    audio.play().then(() => {
+      retryCount = 0;
+      showToast('✓ جاري التشغيل');
+    }).catch(error => {
+      console.warn('Play error:', error);
+      if (retriesLeft > 0 && retryCount < 3) {
+        retryCount++;
+        showToast(`⚠️ محاولة إعادة الاتصال (${retryCount}/3)...`);
+        setTimeout(() => attemptPlay(url, retriesLeft - 1), 2000);
+      } else {
+        showToast('❌ فشل التشغيل، الرابط غير مدعوم أو أن الخادم لا يستجيب');
+      }
     });
   }
 
@@ -425,12 +434,7 @@
     const station = radios.find(r => r.id == id);
     if (!station) return;
     currentPlayingId = id;
-    audio.src = station.streamUrl;
-    audio.load();
-    audio.play().catch(err => {
-      console.warn("Play error:", err);
-      attemptReconnect(station.streamUrl);
-    });
+    attemptPlay(station.streamUrl);
     // Update UI
     document.getElementById('miniPlayer').classList.remove('hidden');
     document.getElementById('playerMiniAvatar').src = station.imageUrl || 'https://placehold.co/50x50';
@@ -440,7 +444,7 @@
     showToast(`🎵 تشغيل ${station.name}`);
   };
 
-  // ---------- Player UI sync ----------
+  // ---------- Player UI sync (fixed for iOS) ----------
   function updateAllPlayerUI() {
     const isPlaying = !audio.paused;
     const playIcon = isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
@@ -463,8 +467,13 @@
 
   // ---------- Playback controls ----------
   function togglePlayPause() {
-    if (audio.paused) audio.play();
-    else audio.pause();
+    if (audio.paused) {
+      const station = radios.find(r => r.id == currentPlayingId);
+      if (station) attemptPlay(station.streamUrl);
+      else audio.play();
+    } else {
+      audio.pause();
+    }
     updateAllPlayerUI();
   }
   function previousTrack() {
@@ -489,6 +498,10 @@
     audio.volume = parseFloat(value);
     if (audio.muted && audio.volume > 0) audio.muted = false;
     updateAllPlayerUI();
+    // For iOS: ensure volume change works even if paused
+    if (audio.paused && audio.readyState >= 2) {
+      audio.play().catch(() => {});
+    }
   }
 
   // ---------- Delete / Edit ----------
@@ -755,7 +768,7 @@
   audio.onended = nextTrack;
   audio.onerror = () => {
     const station = radios.find(r => r.id == currentPlayingId);
-    if (station) attemptReconnect(station.streamUrl);
+    if (station) attemptPlay(station.streamUrl, 3);
   };
 
   // ---------- Auth state ----------
