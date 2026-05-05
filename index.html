@@ -2,577 +2,144 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>راديو سحابي | Radio Nujoom</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>راديو نجوم | Radio Nujoom</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-  
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
-    
-    /* ========== الثيمات ========== */
     :root {
       --bg-primary: linear-gradient(135deg, #f5f7fa 0%, #eef2f7 100%);
-      --bg-card: white;
+      --bg-card: rgba(255,255,255,0.9);
       --text-primary: #1e293b;
       --text-secondary: #64748b;
-      --border: #e2e8f0;
+      --border: rgba(224, 224, 230, 0.5);
       --shadow: 0 8px 20px rgba(0,0,0,0.05);
       --shadow-hover: 0 12px 24px -12px rgba(0,0,0,0.15);
-      --nav-bg: rgba(255,255,255,0.95);
+      --nav-bg: rgba(255,255,255,0.8);
       --input-bg: #f8fafc;
       --toast-bg: #1e293b;
       --toast-text: white;
-      --player-bg: rgba(255,255,255,0.98);
+      --player-bg: rgba(255,255,255,0.96);
+      --glass-blur: blur(12px);
+      --accent: #22c55e;
+      --accent-glow: rgba(34,197,94,0.4);
     }
-    
     body.dark {
       --bg-primary: linear-gradient(135deg, #0f172a 0%, #020617 100%);
-      --bg-card: #1e293b;
+      --bg-card: rgba(30,41,59,0.9);
       --text-primary: #f1f5f9;
       --text-secondary: #94a3b8;
-      --border: #334155;
+      --border: rgba(71, 85, 105, 0.6);
       --shadow: 0 8px 20px rgba(0,0,0,0.3);
       --shadow-hover: 0 12px 24px -12px rgba(0,0,0,0.4);
-      --nav-bg: rgba(15,23,42,0.95);
+      --nav-bg: rgba(15,23,42,0.8);
       --input-bg: #334155;
       --toast-bg: #f1f5f9;
       --toast-text: #1e293b;
-      --player-bg: rgba(30,41,59,0.98);
+      --player-bg: rgba(30,41,59,0.96);
     }
-    
-    body {
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      min-height: 100vh;
-      padding-bottom: 60px;
-      transition: background 0.3s ease, color 0.3s ease;
-    }
-    
+    body { background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; padding-bottom: 70px; transition: all 0.3s; }
     .hidden { display: none !important; }
-    
     /* شاشة البداية */
-    #splash-screen {
-      position: fixed; inset: 0;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      z-index: 9999; transition: opacity 0.5s ease;
-    }
-    .loader {
-      width: 60px; height: 60px;
-      border: 4px solid rgba(255,255,255,0.3);
-      border-top: 4px solid white;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 20px;
-    }
+    #splash-screen { position: fixed; inset: 0; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.5s; }
+    .loader { width: 60px; height: 60px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
     @keyframes spin { to { transform: rotate(360deg); } }
     #loading-status { color: white; font-size: 14px; letter-spacing: 1px; }
-    
     /* الشريط العلوي */
-    .top-nav {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: var(--nav-bg);
-      backdrop-filter: blur(12px);
-      padding: 12px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      transition: all 0.3s ease;
-    }
-    .logo h1 {
-      font-size: 1.5rem;
-      background: linear-gradient(135deg, #22c55e, #3b82f6);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      font-weight: 700;
-    }
-    .nav-actions { display: flex; gap: 12px; align-items: center; }
-    .icon-btn {
-      background: var(--input-bg);
-      border: 1px solid var(--border);
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 1.2rem;
-      color: var(--text-primary);
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .icon-btn:hover { transform: scale(1.05); background: #22c55e; color: white; border-color: #22c55e; }
-    .profile-trigger {
-      background: linear-gradient(135deg, #22c55e, #3b82f6);
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s;
-      color: white;
-    }
-    .profile-trigger:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(34,197,94,0.3); }
-    
-    /* قائمة المستخدم المنسدلة */
-    .user-dropdown {
-      position: absolute;
-      top: 70px;
-      right: 24px;
-      background: var(--bg-card);
-      border-radius: 20px;
-      width: 280px;
-      box-shadow: var(--shadow);
-      z-index: 200;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      animation: slideDown 0.2s ease;
-    }
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .dropdown-header {
-      padding: 20px;
-      text-align: center;
-      border-bottom: 1px solid var(--border);
-    }
-    .dropdown-header img {
-      width: 70px;
-      height: 70px;
-      border-radius: 50%;
-      object-fit: cover;
-      margin-bottom: 10px;
-      border: 3px solid #22c55e;
-    }
-    .dropdown-header h4 { font-size: 1rem; margin-bottom: 5px; color: var(--text-primary); }
-    .dropdown-header p { font-size: 0.75rem; color: var(--text-secondary); }
-    .dropdown-menu { padding: 8px 0; }
-    .dropdown-item {
-      padding: 12px 20px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      cursor: pointer;
-      transition: background 0.2s;
-      color: var(--text-primary);
-    }
-    .dropdown-item i { width: 24px; font-size: 1.1rem; color: #22c55e; }
+    .top-nav { position: sticky; top: 0; z-index: 100; background: var(--nav-bg); backdrop-filter: var(--glass-blur); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+    .logo h1 { font-size: 1.5rem; background: linear-gradient(135deg, var(--accent), #3b82f6); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 700; }
+    .nav-actions { display: flex; gap: 12px; }
+    .icon-btn { background: var(--input-bg); border: 1px solid var(--border); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; color: var(--text-primary); display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+    .icon-btn:hover { background: var(--accent); color: white; transform: scale(1.05); }
+    .profile-trigger { background: linear-gradient(135deg, var(--accent), #3b82f6); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; }
+    /* قائمة المستخدم */
+    .user-dropdown { position: absolute; top: 70px; right: 24px; background: var(--bg-card); backdrop-filter: var(--glass-blur); border-radius: 20px; width: 280px; box-shadow: var(--shadow); z-index: 200; border: 1px solid var(--border); animation: fadeIn 0.2s; }
+    .dropdown-header { padding: 20px; text-align: center; border-bottom: 1px solid var(--border); }
+    .dropdown-header img { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent); }
+    .dropdown-header h4 { margin: 10px 0 5px; color: var(--text-primary); }
+    .dropdown-header p { font-size: 12px; color: var(--text-secondary); }
+    .dropdown-item { padding: 12px 20px; display: flex; align-items: center; gap: 12px; cursor: pointer; color: var(--text-primary); }
+    .dropdown-item i { width: 24px; color: var(--accent); }
     .dropdown-item:hover { background: rgba(34,197,94,0.1); }
     .dropdown-divider { height: 1px; background: var(--border); margin: 8px 0; }
-    
     /* أزرار العرض */
-    .view-bar {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin: 20px 24px;
-    }
-    .view-pill {
-      background: var(--input-bg);
-      border: 1px solid var(--border);
-      padding: 8px 24px;
-      border-radius: 40px;
-      font-weight: 500;
-      color: var(--text-secondary);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .view-pill.active {
-      background: #22c55e;
-      color: white;
-      border-color: #22c55e;
-      box-shadow: 0 2px 8px rgba(34,197,94,0.3);
-    }
-    
-    /* حقل البحث */
-    #searchContainer {
-      padding: 0 24px 12px 24px;
-      overflow: hidden;
-      transition: all 0.3s ease;
-      max-height: 0;
-      opacity: 0;
-    }
-    #searchContainer.show {
-      max-height: 100px;
-      opacity: 1;
-    }
-    #searchInput {
-      width: 100%;
-      padding: 12px 16px;
-      border-radius: 30px;
-      border: 1px solid var(--border);
-      background: var(--input-bg);
-      color: var(--text-primary);
-      font-size: 14px;
-      transition: all 0.2s;
-    }
-    #searchInput:focus { outline: none; border-color: #22c55e; }
-    
-    /* شبكة القنوات */
-    .radio-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 20px;
-      padding: 0 24px 24px 24px;
-    }
-    .radio-card {
-      background: var(--bg-card);
-      border-radius: 24px;
-      padding: 16px;
-      transition: all 0.25s ease;
-      cursor: pointer;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border);
-      position: relative;
-    }
-    .radio-card:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-hover);
-      border-color: #22c55e;
-    }
-    .radio-card img {
-      width: 100%;
-      height: 130px;
-      object-fit: cover;
-      border-radius: 20px;
-      margin-bottom: 12px;
-      background: var(--input-bg);
-    }
-    .radio-card h3 {
-      font-size: 0.9rem;
-      font-weight: 600;
-      text-align: center;
-      color: var(--text-primary);
-    }
-    .menu-dots {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      background: var(--bg-card);
-      border-radius: 30px;
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-      border: 1px solid var(--border);
-    }
-    .menu-dots:hover { background: #22c55e; color: white; }
-    .drag-handle {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      background: var(--bg-card);
-      border-radius: 30px;
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: grab;
-      border: 1px solid var(--border);
-    }
-    .drag-handle:active { cursor: grabbing; }
-    
+    .view-bar { display: flex; justify-content: center; gap: 10px; margin: 20px 24px; }
+    .view-pill { background: var(--input-bg); border: 1px solid var(--border); padding: 8px 24px; border-radius: 40px; cursor: pointer; color: var(--text-secondary); transition: 0.2s; }
+    .view-pill.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 2px 8px var(--accent-glow); }
+    #searchContainer { padding: 0 24px 12px; overflow: hidden; transition: 0.3s; max-height: 0; opacity: 0; }
+    #searchContainer.show { max-height: 100px; opacity: 1; }
+    #searchInput { width: 100%; padding: 12px 16px; border-radius: 30px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-primary); }
+    .radio-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; padding: 0 24px 24px; }
+    .radio-card { background: var(--bg-card); backdrop-filter: var(--glass-blur); border-radius: 24px; padding: 16px; transition: all 0.25s; cursor: pointer; box-shadow: var(--shadow); border: 1px solid var(--border); position: relative; }
+    .radio-card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: var(--shadow-hover); }
+    .radio-card img { width: 100%; height: 130px; object-fit: cover; border-radius: 20px; margin-bottom: 12px; background: var(--input-bg); }
+    .radio-card h3 { font-size: 0.9rem; text-align: center; color: var(--text-primary); }
+    .menu-dots { position: absolute; top: 12px; right: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .drag-handle { position: absolute; top: 12px; left: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: grab; }
     /* العرض العمودي */
     .vertical-view .radio-grid { display: flex; flex-direction: column; gap: 12px; }
     .vertical-view .radio-card { display: flex; align-items: center; gap: 16px; padding: 12px 20px; }
     .vertical-view .radio-card img { width: 60px; height: 60px; margin: 0; }
-    .vertical-view .radio-card h3 { flex: 1; text-align: right; margin: 0; }
     .vertical-view .menu-dots, .vertical-view .drag-handle { position: static; margin: 0 6px; }
-    
     /* العرض الدائري */
     .circle-view .radio-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 24px; }
-    .circle-view .radio-card { width: 100px; text-align: center; background: transparent; box-shadow: none; padding: 8px; }
-    .circle-view .radio-card img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #22c55e; margin-bottom: 8px; }
-    .circle-view .radio-card h3 { font-size: 0.8rem; }
+    .circle-view .radio-card { width: 100px; text-align: center; background: transparent; backdrop-filter: none; box-shadow: none; padding: 8px; }
+    .circle-view .radio-card img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--accent); margin-bottom: 8px; }
     .circle-view .menu-dots, .circle-view .drag-handle { top: 4px; width: 24px; height: 24px; }
-    
     /* مودال */
-    .modal {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.6);
-      backdrop-filter: blur(8px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      animation: fadeIn 0.2s ease;
-    }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .modal-content {
-      background: var(--bg-card);
-      max-width: 500px;
-      width: 90%;
-      padding: 28px;
-      border-radius: 32px;
-      color: var(--text-primary);
-      border: 1px solid var(--border);
-    }
-    .modal-content input {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 14px;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      background: var(--input-bg);
-      color: var(--text-primary);
-    }
-    .image-upload-area {
-      border: 2px dashed var(--border);
-      border-radius: 20px;
-      padding: 16px;
-      text-align: center;
-      cursor: pointer;
-      margin-bottom: 12px;
-    }
-    
-    /* ========== شريط التشغيل السفلي الأنيق ========== */
-    .mini-player {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: var(--player-bg);
-      backdrop-filter: blur(20px);
-      border-top: 1px solid var(--border);
-      padding: 8px 24px;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 24px;
-      transition: all 0.3s ease;
-    }
-    .player-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      object-fit: cover;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .player-controls {
-      display: flex;
-      gap: 20px;
-      align-items: center;
-    }
-    .player-controls button {
-      background: transparent;
-      border: none;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 1.2rem;
-      color: var(--text-primary);
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .player-controls button:hover {
-      background: rgba(34,197,94,0.15);
-      transform: scale(1.05);
-    }
-    .player-controls button.primary {
-      background: #22c55e;
-      color: white;
-    }
-    .player-controls button.primary:hover {
-      background: #16a34a;
-      transform: scale(1.05);
-    }
-    .volume-control {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .volume-control i {
-      color: var(--text-secondary);
-      cursor: pointer;
-      font-size: 1.1rem;
-    }
-    .volume-control i:hover { color: #22c55e; }
-    .volume-slider {
-      width: 100px;
-      height: 4px;
-      border-radius: 4px;
-      background: var(--border);
-      -webkit-appearance: none;
-      cursor: pointer;
-    }
-    .volume-slider:focus { outline: none; }
-    .volume-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: #22c55e;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .volume-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
-    
-    /* Toast أنيق */
-    .custom-toast {
-      position: fixed;
-      bottom: 70px;
-      left: 50%;
-      transform: translateX(-50%) translateY(20px);
-      background: var(--toast-bg);
-      color: var(--toast-text);
-      padding: 8px 20px;
-      border-radius: 40px;
-      font-size: 13px;
-      font-weight: 500;
-      z-index: 1000;
-      opacity: 0;
-      transition: all 0.2s ease;
-      pointer-events: none;
-      white-space: nowrap;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    .custom-toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-    
-    /* صفحة تسجيل الدخول الاحترافية */
-    .auth-container {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      position: relative;
-      overflow: hidden;
-    }
-    .auth-container::before {
-      content: '';
-      position: absolute;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle, rgba(255,255,255,0.1) 1%, transparent 1%);
-      background-size: 50px 50px;
-      animation: moveBg 20s linear infinite;
-    }
-    @keyframes moveBg {
-      from { transform: translate(0, 0); }
-      to { transform: translate(50px, 50px); }
-    }
-    .auth-card {
-      background: rgba(255,255,255,0.98);
-      backdrop-filter: blur(10px);
-      border-radius: 40px;
-      padding: 45px 35px;
-      width: 100%;
-      max-width: 450px;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-      animation: slideUp 0.5s ease;
-      position: relative;
-      z-index: 1;
-    }
-    body.dark .auth-card {
-      background: rgba(30,41,59,0.98);
-    }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .auth-card h2 {
-      font-size: 32px;
-      font-weight: 800;
-      margin-bottom: 30px;
-      text-align: center;
-      background: linear-gradient(135deg, #22c55e, #3b82f6);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-    }
-    .auth-card input {
-      width: 100%;
-      padding: 14px 18px;
-      margin-bottom: 16px;
-      background: #f1f5f9;
-      border: 2px solid #e2e8f0;
-      border-radius: 20px;
-      font-size: 16px;
-      transition: all 0.2s;
-    }
-    body.dark .auth-card input {
-      background: #334155;
-      border-color: #475569;
-      color: white;
-    }
-    .auth-card input:focus {
-      outline: none;
-      border-color: #22c55e;
-      box-shadow: 0 0 0 3px rgba(34,197,94,0.2);
-    }
-    .auth-card button {
-      width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      border: none;
-      border-radius: 20px;
-      color: white;
-      font-weight: 700;
-      font-size: 16px;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-bottom: 12px;
-    }
-    .auth-card button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px -5px rgba(34,197,94,0.4);
-    }
-    .google-btn {
-      background: linear-gradient(135deg, #ea4335, #c5221f) !important;
-    }
-    .auth-card p {
-      text-align: center;
-      margin-top: 20px;
-      color: #64748b;
-    }
-    body.dark .auth-card p { color: #94a3b8; }
-    .auth-card span {
-      color: #22c55e;
-      cursor: pointer;
-      font-weight: 600;
-    }
-    
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.2s; }
+    .modal-content { background: var(--bg-card); backdrop-filter: var(--glass-blur); max-width: 500px; width: 90%; padding: 28px; border-radius: 32px; }
+    .modal-content input { width: 100%; padding: 12px; margin-bottom: 14px; border: 1px solid var(--border); border-radius: 16px; background: var(--input-bg); color: var(--text-primary); }
+    .image-upload-area { border: 2px dashed var(--border); border-radius: 20px; padding: 16px; text-align: center; cursor: pointer; margin-bottom: 12px; }
+    /* شريط التشغيل السفلي */
+    .mini-player { position: fixed; bottom: 0; left: 0; right: 0; background: var(--player-bg); backdrop-filter: var(--glass-blur); border-top: 1px solid var(--border); padding: 6px 20px; display: flex; align-items: center; justify-content: space-between; z-index: 100; transition: transform 0.3s; }
+    .mini-player.hide { transform: translateY(100%); }
+    .player-mini-left { display: flex; align-items: center; gap: 12px; }
+    .player-mini-avatar { width: 44px; height: 44px; border-radius: 12px; object-fit: cover; cursor: pointer; transition: 0.2s; }
+    .player-mini-avatar:hover { transform: scale(1.05); }
+    .player-mini-controls { display: flex; gap: 16px; }
+    .player-mini-controls button { background: transparent; border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; color: var(--text-primary); transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+    .player-mini-controls button:hover { background: rgba(34,197,94,0.2); }
+    .player-mini-controls button.primary { background: var(--accent); color: white; }
+    .expand-btn { background: transparent; border: none; cursor: pointer; color: var(--text-secondary); font-size: 1.2rem; padding: 8px; transition: 0.2s; }
+    .expand-btn:hover { color: var(--accent); transform: scale(1.1); }
+    /* مشغل موسع (Modal) */
+    .player-expanded { position: fixed; inset: 0; background: var(--bg-card); backdrop-filter: blur(20px); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; animation: fadeIn 0.3s; }
+    .expanded-avatar { width: 220px; height: 220px; border-radius: 30px; object-fit: cover; box-shadow: 0 20px 35px -10px rgba(0,0,0,0.3); border: 3px solid var(--accent); }
+    .expanded-title { font-size: 1.8rem; font-weight: 700; text-align: center; margin-top: 10px; }
+    .expanded-controls { display: flex; gap: 30px; margin: 20px 0; }
+    .expanded-controls button { background: transparent; border: none; width: 60px; height: 60px; border-radius: 50%; font-size: 1.8rem; cursor: pointer; color: var(--text-primary); transition: 0.2s; }
+    .expanded-controls button:hover { background: rgba(34,197,94,0.2); transform: scale(1.05); }
+    .expanded-controls button.primary { background: var(--accent); color: white; }
+    .expanded-volume { display: flex; align-items: center; gap: 16px; width: 80%; max-width: 300px; margin: 10px auto; }
+    .expanded-volume input { flex: 1; height: 5px; border-radius: 5px; accent-color: var(--accent); }
+    .close-expanded { position: absolute; top: 20px; left: 20px; background: transparent; border: none; font-size: 1.8rem; cursor: pointer; color: var(--text-secondary); }
+    /* Toast */
+    .custom-toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--toast-bg); color: var(--toast-text); padding: 8px 20px; border-radius: 40px; font-size: 13px; z-index: 1100; opacity: 0; transition: 0.2s; white-space: nowrap; pointer-events: none; }
+    .custom-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    /* صفحة المصادقة */
+    .auth-container { min-height: 100vh; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .auth-card { background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); border-radius: 40px; padding: 45px 35px; width: 100%; max-width: 450px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); animation: fadeInUp 0.5s; }
+    body.dark .auth-card { background: rgba(30,41,59,0.98); }
+    .auth-card h2 { font-size: 32px; font-weight: 800; margin-bottom: 30px; text-align: center; background: linear-gradient(135deg, var(--accent), #3b82f6); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .auth-card input { width: 100%; padding: 14px 18px; margin-bottom: 16px; background: #f1f5f9; border: 2px solid #e2e8f0; border-radius: 20px; }
+    body.dark .auth-card input { background: #334155; border-color: #475569; color: white; }
+    .auth-card input:focus { outline: none; border-color: var(--accent); }
+    .auth-card button { width: 100%; padding: 14px; background: linear-gradient(135deg, var(--accent), #16a34a); border: none; border-radius: 20px; color: white; font-weight: 700; margin-bottom: 12px; cursor: pointer; transition: 0.2s; }
+    .auth-card button:hover { transform: translateY(-2px); }
+    .google-btn { background: linear-gradient(135deg, #ea4335, #c5221f) !important; }
     .empty-state { text-align: center; padding: 60px; color: var(--text-secondary); }
-    @media (max-width: 640px) {
-      .radio-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
-      .top-nav { padding: 10px 16px; }
-      .mini-player { padding: 6px 16px; gap: 12px; }
-      .volume-slider { width: 70px; }
-    }
+    @media (max-width: 640px) { .radio-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); } .expanded-avatar { width: 160px; height: 160px; } .expanded-title { font-size: 1.3rem; } }
   </style>
 </head>
 <body>
+<div id="splash-screen"><div class="loader"></div><div id="loading-status">جاري تحميل التطبيق...</div></div>
 
-<div id="splash-screen">
-  <div class="loader"></div>
-  <div id="loading-status">جاري تحميل التطبيق...</div>
-</div>
-
-<!-- شاشات تسجيل الدخول -->
 <div class="auth-container hidden" id="authContainer">
   <div class="auth-card" id="loginCard">
     <h2>✨ مرحباً بك</h2>
@@ -593,7 +160,6 @@
   </div>
 </div>
 
-<!-- التطبيق الرئيسي -->
 <div class="app hidden" id="app">
   <div class="top-nav">
     <div class="logo"><h1>📻 راديو نجوم</h1></div>
@@ -604,7 +170,6 @@
       <div class="profile-trigger" id="profileTrigger"><i class="fas fa-user"></i></div>
     </div>
   </div>
-
   <div class="user-dropdown hidden" id="userDropdown">
     <div class="dropdown-header">
       <img id="dropdownAvatar" src="https://placehold.co/100x100/e2e8f0/1e293b?text=User">
@@ -612,62 +177,70 @@
       <p id="dropdownEmail">البريد الإلكتروني</p>
     </div>
     <div class="dropdown-menu">
-      <div class="dropdown-item" data-nav="all"><i class="fas fa-home"></i> <span>الرئيسية</span></div>
-      <div class="dropdown-item" data-nav="favorites"><i class="fas fa-heart"></i> <span>المفضلة</span></div>
-      <div class="dropdown-item" id="editModeDropdown"><i class="fas fa-arrows-alt"></i> <span>وضع الترتيب</span></div>
+      <div class="dropdown-item" data-nav="all"><i class="fas fa-home"></i> الرئيسية</div>
+      <div class="dropdown-item" data-nav="favorites"><i class="fas fa-heart"></i> المفضلة</div>
+      <div class="dropdown-item" id="editModeDropdown"><i class="fas fa-arrows-alt"></i> وضع الترتيب</div>
       <div class="dropdown-divider"></div>
-      <div class="dropdown-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> <span>تسجيل الخروج</span></div>
+      <div class="dropdown-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</div>
     </div>
   </div>
-
   <div class="view-bar">
     <button class="view-pill active" data-view="grid">شبكي</button>
     <button class="view-pill" data-view="vertical">عمودي</button>
     <button class="view-pill" data-view="circle">دائري</button>
   </div>
-
   <div id="searchContainer"><input type="text" id="searchInput" placeholder="🔍 ابحث عن محطة..."></div>
-
   <div id="radioGrid" class="radio-grid"></div>
 </div>
 
-<!-- مودال إضافة/تعديل -->
 <div class="modal hidden" id="radioModal">
   <div class="modal-content">
     <h2 id="modalTitle">➕ محطة جديدة</h2>
     <input type="text" id="radioName" placeholder="اسم المحطة *">
     <input type="text" id="radioUrl" placeholder="رابط البث *">
     <input type="text" id="radioCategory" placeholder="التصنيف">
-    <div class="image-upload-area" id="imageUploadArea">
-      <i class="fas fa-cloud-upload-alt"></i> اضغط لرفع صورة
-      <input type="file" id="radioImage" accept="image/*" style="display:none">
-    </div>
+    <div class="image-upload-area" id="imageUploadArea"><i class="fas fa-cloud-upload-alt"></i> اضغط لرفع صورة<input type="file" id="radioImage" accept="image/*" style="display:none"></div>
     <div id="imagePreview" class="upload-preview hidden"><img id="previewImg" style="width:80px;border-radius:16px;"></div>
-    <div id="uploadProgress" class="hidden" style="text-align:center; color:#22c55e;">جاري الرفع...</div>
-    <button id="saveRadioBtn" style="background:#22c55e; color:white;">💾 حفظ</button>
+    <div id="uploadProgress" class="hidden" style="text-align:center; color:var(--accent);">جاري الرفع...</div>
+    <button id="saveRadioBtn" style="background:var(--accent); color:white;">💾 حفظ</button>
     <button id="deleteFromModalBtn" class="hidden" style="background:#ef4444; color:white;">🗑️ حذف</button>
     <button id="closeModalBtn" style="background:#94a3b8; color:white;">❌ إلغاء</button>
   </div>
 </div>
 
-<!-- ========== شريط التشغيل السفلي الأنيق ========== -->
 <div class="mini-player hidden" id="miniPlayer">
-  <img id="playerAvatar" class="player-avatar" src="https://placehold.co/50x50">
-  <div class="player-controls">
-    <button id="prevBtn"><i class="fas fa-step-backward"></i></button>
-    <button id="playPauseBtn" class="primary"><i class="fas fa-play"></i></button>
-    <button id="nextBtn"><i class="fas fa-step-forward"></i></button>
+  <div class="player-mini-left">
+    <img id="playerMiniAvatar" class="player-mini-avatar" src="https://placehold.co/50x50">
+    <button class="expand-btn" id="expandPlayerBtn"><i class="fas fa-expand-alt"></i></button>
   </div>
-  <div class="volume-control">
-    <i id="muteBtn" class="fas fa-volume-up"></i>
-    <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.01" value="0.8">
+  <div class="player-mini-controls">
+    <button id="miniPrevBtn"><i class="fas fa-step-backward"></i></button>
+    <button id="miniPlayPauseBtn" class="primary"><i class="fas fa-play"></i></button>
+    <button id="miniNextBtn"><i class="fas fa-step-forward"></i></button>
+    <button id="miniMuteBtn"><i class="fas fa-volume-up"></i></button>
+  </div>
+</div>
+
+<!-- مشغل موسع -->
+<div id="expandedPlayer" class="player-expanded hidden">
+  <button class="close-expanded" id="closeExpandedBtn"><i class="fas fa-times"></i></button>
+  <img id="expandedAvatar" class="expanded-avatar" src="https://placehold.co/220x220">
+  <h2 id="expandedTitle" class="expanded-title">اسم المحطة</h2>
+  <div class="expanded-controls">
+    <button id="expandedPrevBtn"><i class="fas fa-step-backward"></i></button>
+    <button id="expandedPlayPauseBtn" class="primary"><i class="fas fa-play"></i></button>
+    <button id="expandedNextBtn"><i class="fas fa-step-forward"></i></button>
+  </div>
+  <div class="expanded-volume">
+    <i id="expandedMuteIcon" class="fas fa-volume-up"></i>
+    <input type="range" id="expandedVolumeSlider" min="0" max="1" step="0.01" value="0.8">
   </div>
 </div>
 
 <div id="customToast" class="custom-toast"></div>
 
 <script>
-  // ========== Firebase Config ==========
+  // Firebase Config (ثابت)
   const firebaseConfig = {
     apiKey: "AIzaSyBRvU198Ov7i6XdQTiKkuPJ-8biyKQt0Eo",
     authDomain: "radioapp-4f31a.firebaseapp.com",
@@ -683,39 +256,16 @@
   const auth = firebase.auth();
   const db = firebase.firestore();
 
-  // ========== متغيرات عامة ==========
   let currentUser = null, radios = [], currentFilter = 'all', currentPlayingId = null, currentView = 'grid', editId = null, editMode = false;
   let audio = new Audio();
   let unsubscribeRadios = null;
   let currentCloudinaryUrl = null, currentImageFile = null;
   let isMuted = false;
+  let retryCount = 0;
+  let retryTimer = null;
 
-  // ========== Toast أنيق ==========
-  function showToast(message) {
-    const toast = document.getElementById('customToast');
-    toast.innerText = message;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 2000);
-  }
-
-  // ========== الثيم ==========
-  function initTheme() {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') document.body.classList.add('dark');
-    else document.body.classList.remove('dark');
-    const themeBtn = document.getElementById('themeToggle');
-    if (themeBtn) {
-      themeBtn.innerHTML = document.body.classList.contains('dark') ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-    }
-  }
-  function toggleTheme() {
-    document.body.classList.toggle('dark');
-    localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
-    const themeBtn = document.getElementById('themeToggle');
-    if (themeBtn) themeBtn.innerHTML = document.body.classList.contains('dark') ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-  }
-
-  function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+  function showToast(msg) { const t = document.getElementById('customToast'); t.innerText = msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
+  function escapeHtml(s) { if(!s) return ''; return s.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
   function hideSplash() { const s = document.getElementById('splash-screen'); if(s) s.style.opacity='0'; setTimeout(()=>s?.remove(),500); }
 
   async function uploadToCloudinary(file) {
@@ -731,12 +281,8 @@
     });
   }
 
-  async function saveOrder() {
-    if(!currentUser || radios.length===0) return;
-    const order = radios.map(r=>r.id);
-    await db.collection('users').doc(currentUser.uid).collection('settings').doc('preferences').set({ order }, { merge: true });
-  }
-
+  async function saveOrder() { if(!currentUser || !radios.length) return; const order = radios.map(r=>r.id); await db.collection('users').doc(currentUser.uid).collection('settings').doc('preferences').set({order},{merge:true}); }
+  
   function listenToRadios() {
     if(unsubscribeRadios) unsubscribeRadios();
     if(!currentUser) return;
@@ -796,41 +342,61 @@
     });
   }
 
+  // دالة إعادة المحاولة عند انقطاع البث
+  function startRetry(stationUrl) {
+    if (retryTimer) clearTimeout(retryTimer);
+    retryCount = 0;
+    function attempt() {
+      if (retryCount < 3) {
+        retryCount++;
+        showToast(`⚠️ محاولة إعادة الاتصال (${retryCount}/3)...`);
+        audio.src = stationUrl;
+        audio.play().catch(() => {
+          retryTimer = setTimeout(attempt, 5000);
+        });
+      } else {
+        showToast('❌ فشل الاتصال، يرجى التحقق من الشبكة لاحقاً');
+      }
+    }
+    attempt();
+  }
+
   window.toggleFavorite=async(id)=>{
     const station=radios.find(r=>r.id==id);
     const newFav=!station.favorite;
     await db.collection('users').doc(currentUser.uid).collection('radios').doc(id).update({favorite:newFav});
     showToast(newFav?'❤️ أضيفت للمفضلة':'💔 أزيلت من المفضلة');
   };
-  
   window.playRadio=(id)=>{
     const station=radios.find(r=>r.id==id);
     if(!station) return;
     currentPlayingId=id;
     audio.src=station.streamUrl;
-    audio.play().catch(()=>showToast('⚠️ لا يمكن تشغيل البث'));
+    audio.play().catch(()=>{
+      startRetry(station.streamUrl);
+    });
     document.getElementById('miniPlayer').classList.remove('hidden');
-    document.getElementById('playerAvatar').src=station.imageUrl||'https://placehold.co/50x50';
-    document.getElementById('playPauseBtn').innerHTML='<i class="fas fa-pause"></i>';
+    document.getElementById('playerMiniAvatar').src=station.imageUrl||'https://placehold.co/50x50';
+    document.getElementById('miniPlayPauseBtn').innerHTML='<i class="fas fa-pause"></i>';
+    document.getElementById('expandedAvatar').src=station.imageUrl||'https://placehold.co/220x220';
+    document.getElementById('expandedTitle').innerText=station.name;
+    document.getElementById('expandedPlayPauseBtn').innerHTML='<i class="fas fa-pause"></i>';
     showToast(`🎵 تشغيل ${station.name}`);
   };
-  
   window.openEditMenu=async(id)=>{
     document.getElementById('userDropdown').classList.add('hidden');
     const res=await Swal.fire({title:'خيارات',showCancelButton:true,confirmButtonText:'✏️ تعديل',denyButtonText:'🗑️ حذف',showDenyButton:true});
     if(res.isConfirmed) editRadio(id);
     else if(res.isDenied) deleteRadio(id);
   };
-  
   window.deleteRadio=async(id)=>{
     const conf=await Swal.fire({title:'حذف؟',icon:'warning',showCancelButton:true});
     if(conf.isConfirmed){
       await db.collection('users').doc(currentUser.uid).collection('radios').doc(id).delete();
-      if(currentPlayingId==id){ audio.pause(); document.getElementById('miniPlayer').classList.add('hidden');}
+      if(currentPlayingId==id){ audio.pause(); document.getElementById('miniPlayer').classList.add('hidden'); document.getElementById('expandedPlayer').classList.add('hidden');}
       showToast('✓ تم الحذف');
     }
   };
-  
   window.editRadio=async(id)=>{
     const radio=radios.find(r=>r.id==id);
     editId=id;
@@ -847,10 +413,16 @@
     document.getElementById('deleteFromModalBtn').classList.remove('hidden');
     document.getElementById('radioModal').classList.remove('hidden');
   };
-
-  // ========== أحداث الواجهة ==========
-  document.getElementById('themeToggle').onclick = toggleTheme;
   
+  // أحداث الواجهة
+  document.getElementById('themeToggle').onclick = ()=>{
+    document.body.classList.toggle('dark');
+    localStorage.setItem('theme', document.body.classList.contains('dark')?'dark':'light');
+    document.getElementById('themeToggle').innerHTML = document.body.classList.contains('dark')?'<i class="fas fa-sun"></i>':'<i class="fas fa-moon"></i>';
+  };
+  if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark');
+  document.getElementById('themeToggle').innerHTML = document.body.classList.contains('dark')?'<i class="fas fa-sun"></i>':'<i class="fas fa-moon"></i>';
+
   document.getElementById('registerBtn').onclick=async()=>{
     const name=document.getElementById('registerName').value, email=document.getElementById('registerEmail').value, pwd=document.getElementById('registerPassword').value, conf=document.getElementById('registerConfirmPassword').value;
     if(pwd!==conf) return showToast('⚠️ كلمة المرور غير متطابقة');
@@ -864,7 +436,6 @@
       document.getElementById('loginCard').classList.remove('hidden');
     }catch(e){ showToast('⚠️ '+e.message); }
   };
-  
   document.getElementById('loginBtn').onclick=async()=>{
     const email=document.getElementById('loginEmail').value, pwd=document.getElementById('loginPassword').value;
     try{
@@ -872,29 +443,15 @@
       if(!uc.user.emailVerified){ await auth.signOut(); showToast('⚠️ يرجى تأكيد البريد الإلكتروني'); }
     }catch(e){ showToast('⚠️ بيانات غير صحيحة'); }
   };
-  
   document.getElementById('googleLoginBtn').onclick=async()=>{ try{ await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }catch(e){ showToast('⚠️ '+e.message); } };
   document.getElementById('showRegister').onclick=()=>{ document.getElementById('loginCard').classList.add('hidden'); document.getElementById('registerCard').classList.remove('hidden'); };
   document.getElementById('showLogin').onclick=()=>{ document.getElementById('registerCard').classList.add('hidden'); document.getElementById('loginCard').classList.remove('hidden'); };
-  document.getElementById('logoutBtn').onclick=async()=>{ await auth.signOut(); audio.pause(); document.getElementById('miniPlayer').classList.add('hidden'); showToast('✓ تم تسجيل الخروج'); };
-
-  // بحث
-  const searchBtn = document.getElementById('searchBtn');
-  const searchContainer = document.getElementById('searchContainer');
-  const searchInput = document.getElementById('searchInput');
-  searchBtn.onclick = ()=>{
-    searchContainer.classList.toggle('show');
-    if(searchContainer.classList.contains('show')) searchInput.focus();
-  };
-  searchInput.oninput = (e)=>{
-    const val = e.target.value.toLowerCase();
-    document.querySelectorAll('.radio-card').forEach(c=>{
-      const title = c.querySelector('h3')?.innerText.toLowerCase()||'';
-      c.style.display = title.includes(val)?'':'none';
-    });
-  };
-
-  // إضافة محطة
+  document.getElementById('logoutBtn').onclick=async()=>{ await auth.signOut(); audio.pause(); document.getElementById('miniPlayer').classList.add('hidden'); document.getElementById('expandedPlayer').classList.add('hidden'); showToast('✓ تم تسجيل الخروج'); };
+  
+  const searchBtn = document.getElementById('searchBtn'), searchContainer = document.getElementById('searchContainer'), searchInput = document.getElementById('searchInput');
+  searchBtn.onclick = ()=>{ searchContainer.classList.toggle('show'); if(searchContainer.classList.contains('show')) searchInput.focus(); };
+  searchInput.oninput = (e)=>{ const val = e.target.value.toLowerCase(); document.querySelectorAll('.radio-card').forEach(c=>{ const title = c.querySelector('h3')?.innerText.toLowerCase()||''; c.style.display = title.includes(val)?'':'none'; }); };
+  
   document.getElementById('addRadioBtn').onclick = ()=>{
     editId=null;
     document.getElementById('modalTitle').innerText='➕ محطة جديدة';
@@ -906,7 +463,6 @@
     document.getElementById('deleteFromModalBtn').classList.add('hidden');
     document.getElementById('radioModal').classList.remove('hidden');
   };
-  
   document.getElementById('saveRadioBtn').onclick=async()=>{
     const name=document.getElementById('radioName').value.trim(), url=document.getElementById('radioUrl').value.trim();
     if(!name || !url) return showToast('⚠️ املأ الحقول');
@@ -922,11 +478,9 @@
     showToast(editId?'✓ تم التعديل':'✓ تمت الإضافة');
     document.getElementById('radioModal').classList.add('hidden');
   };
-  
   document.getElementById('deleteFromModalBtn').onclick=async()=>{ if(editId){ await window.deleteRadio(editId); document.getElementById('radioModal').classList.add('hidden'); } };
   document.getElementById('closeModalBtn').onclick=()=>document.getElementById('radioModal').classList.add('hidden');
-
-  // رفع الصورة
+  
   const uploadArea=document.getElementById('imageUploadArea'), imgInput=document.getElementById('radioImage');
   uploadArea.onclick=()=>imgInput.click();
   imgInput.onchange=async(e)=>{
@@ -938,18 +492,10 @@
       reader.readAsDataURL(file);
     }else showToast('⚠️ صورة فقط وحتى 5MB');
   };
-
-  // قائمة المستخدم
-  const profileTrigger=document.getElementById('profileTrigger');
-  const userDropdown=document.getElementById('userDropdown');
-  profileTrigger.onclick=(e)=>{
-    e.stopPropagation();
-    userDropdown.classList.toggle('hidden');
-  };
-  document.addEventListener('click',(e)=>{
-    if(!profileTrigger.contains(e.target) && !userDropdown.contains(e.target)) userDropdown.classList.add('hidden');
-  });
   
+  const profileTrigger=document.getElementById('profileTrigger'), userDropdown=document.getElementById('userDropdown');
+  profileTrigger.onclick=(e)=>{ e.stopPropagation(); userDropdown.classList.toggle('hidden'); };
+  document.addEventListener('click',(e)=>{ if(!profileTrigger.contains(e.target) && !userDropdown.contains(e.target)) userDropdown.classList.add('hidden'); });
   async function updateDropdown(){
     if(!currentUser) return;
     document.getElementById('dropdownName').innerText=currentUser.displayName||'مستخدم';
@@ -957,25 +503,16 @@
     const profileDoc = await db.collection('users').doc(currentUser.uid).collection('settings').doc('profile').get();
     if(profileDoc.exists && profileDoc.data().avatarUrl) document.getElementById('dropdownAvatar').src=profileDoc.data().avatarUrl;
   }
-  
-  document.querySelectorAll('.dropdown-item[data-nav]').forEach(item=>{
-    item.onclick=()=>{
-      currentFilter=item.dataset.nav;
-      renderRadios();
-      userDropdown.classList.add('hidden');
-    };
-  });
-  
+  document.querySelectorAll('.dropdown-item[data-nav]').forEach(item=>{ item.onclick=()=>{ currentFilter=item.dataset.nav; renderRadios(); userDropdown.classList.add('hidden'); }; });
   document.getElementById('editModeDropdown').onclick=()=>{
     editMode=!editMode;
     const btn=document.getElementById('editModeDropdown');
-    btn.innerHTML = editMode ? '<i class="fas fa-check"></i> <span>إنهاء الترتيب</span>' : '<i class="fas fa-arrows-alt"></i> <span>وضع الترتيب</span>';
+    btn.innerHTML = editMode ? '<i class="fas fa-check"></i> إنهاء الترتيب' : '<i class="fas fa-arrows-alt"></i> وضع الترتيب';
     renderRadios();
     userDropdown.classList.add('hidden');
     showToast(editMode?'اسحب القنوات لإعادة الترتيب':'تم الخروج من وضع الترتيب');
   };
-
-  // أزرار العرض
+  
   document.querySelectorAll('.view-pill').forEach(btn=>{
     btn.onclick=()=>{
       document.querySelectorAll('.view-pill').forEach(b=>b.classList.remove('active'));
@@ -988,81 +525,98 @@
       renderRadios();
     };
   });
-
-  // ========== تحكمات شريط التشغيل ==========
-  const playPauseBtn = document.getElementById('playPauseBtn');
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
-  const volumeSlider = document.getElementById('volumeSlider');
-  const muteBtn = document.getElementById('muteBtn');
   
-  playPauseBtn.onclick = () => {
-    if(audio.paused) {
-      audio.play();
-      playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-    } else {
-      audio.pause();
-      playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+  // التحكم في المشغل المصغر والموسع
+  function syncMiniPlayer() {
+    const station = radios.find(r=>r.id==currentPlayingId);
+    if(station){
+      document.getElementById('playerMiniAvatar').src=station.imageUrl||'https://placehold.co/50x50';
+      document.getElementById('expandedAvatar').src=station.imageUrl||'https://placehold.co/220x220';
+      document.getElementById('expandedTitle').innerText=station.name;
     }
-  };
+    const isPlaying = !audio.paused;
+    document.getElementById('miniPlayPauseBtn').innerHTML = isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+    document.getElementById('expandedPlayPauseBtn').innerHTML = isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+    const vol = audio.volume;
+    const muteIcon = vol === 0 ? '<i class="fas fa-volume-mute"></i>' : (vol <= 0.5 ? '<i class="fas fa-volume-down"></i>' : '<i class="fas fa-volume-up"></i>');
+    document.getElementById('miniMuteBtn').innerHTML = muteIcon;
+    document.getElementById('expandedMuteIcon').innerHTML = muteIcon;
+    document.getElementById('expandedVolumeSlider').value = vol;
+  }
   
-  prevBtn.onclick = () => {
+  const miniPlayPause = document.getElementById('miniPlayPauseBtn');
+  const miniPrev = document.getElementById('miniPrevBtn');
+  const miniNext = document.getElementById('miniNextBtn');
+  const miniMute = document.getElementById('miniMuteBtn');
+  const expandBtn = document.getElementById('expandPlayerBtn');
+  const expandedPlayer = document.getElementById('expandedPlayer');
+  const closeExpanded = document.getElementById('closeExpandedBtn');
+  const expandedPlayPause = document.getElementById('expandedPlayPauseBtn');
+  const expandedPrev = document.getElementById('expandedPrevBtn');
+  const expandedNext = document.getElementById('expandedNextBtn');
+  const expandedVolumeSlider = document.getElementById('expandedVolumeSlider');
+  const expandedMuteIcon = document.getElementById('expandedMuteIcon');
+  
+  miniPlayPause.onclick = ()=>{
+    if(audio.paused) { audio.play(); syncMiniPlayer(); } else { audio.pause(); syncMiniPlayer(); }
+  };
+  miniPrev.onclick = ()=>{
     if(radios.length && currentPlayingId){
-      let idx = radios.findIndex(r => r.id == currentPlayingId);
-      idx = (idx - 1 + radios.length) % radios.length;
+      let idx=radios.findIndex(r=>r.id==currentPlayingId);
+      idx=(idx-1+radios.length)%radios.length;
       playRadio(radios[idx].id);
     }
   };
-  
-  nextBtn.onclick = () => {
+  miniNext.onclick = ()=>{
     if(radios.length && currentPlayingId){
-      let idx = radios.findIndex(r => r.id == currentPlayingId);
-      idx = (idx + 1) % radios.length;
+      let idx=radios.findIndex(r=>r.id==currentPlayingId);
+      idx=(idx+1)%radios.length;
       playRadio(radios[idx].id);
     }
   };
-  
-  volumeSlider.oninput = (e) => {
-    const val = parseFloat(e.target.value);
-    audio.volume = val;
-    if(val === 0) {
-      muteBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
-      isMuted = true;
-    } else if(val > 0 && val <= 0.5) {
-      muteBtn.innerHTML = '<i class="fas fa-volume-down"></i>';
-      isMuted = false;
-    } else {
-      muteBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
-      isMuted = false;
-    }
-  };
-  
-  muteBtn.onclick = () => {
-    if(!isMuted) {
+  miniMute.onclick = ()=>{
+    if(audio.volume > 0) {
       audio.volume = 0;
-      volumeSlider.value = 0;
-      muteBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
       isMuted = true;
     } else {
       audio.volume = 0.8;
-      volumeSlider.value = 0.8;
-      muteBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
       isMuted = false;
     }
+    syncMiniPlayer();
+  };
+  expandBtn.onclick = ()=>{ expandedPlayer.classList.remove('hidden'); syncMiniPlayer(); };
+  closeExpanded.onclick = ()=>{ expandedPlayer.classList.add('hidden'); };
+  expandedPlayPause.onclick = ()=>{
+    if(audio.paused) { audio.play(); } else { audio.pause(); }
+    syncMiniPlayer();
+  };
+  expandedPrev.onclick = miniPrev.onclick;
+  expandedNext.onclick = miniNext.onclick;
+  expandedVolumeSlider.oninput = (e)=>{
+    const val = parseFloat(e.target.value);
+    audio.volume = val;
+    syncMiniPlayer();
+  };
+  expandedMuteIcon.onclick = ()=>{
+    if(audio.volume > 0) { audio.volume = 0; } else { audio.volume = 0.8; }
+    syncMiniPlayer();
   };
   
+  audio.onplay = () => syncMiniPlayer();
+  audio.onpause = () => syncMiniPlayer();
+  audio.onvolumechange = () => syncMiniPlayer();
   audio.onended = () => {
     if(radios.length && currentPlayingId){
-      let idx = radios.findIndex(r => r.id == currentPlayingId);
-      idx = (idx + 1) % radios.length;
+      let idx=radios.findIndex(r=>r.id==currentPlayingId);
+      idx=(idx+1)%radios.length;
       playRadio(radios[idx].id);
     }
   };
+  audio.onerror = () => {
+    const station = radios.find(r=>r.id==currentPlayingId);
+    if(station) startRetry(station.streamUrl);
+  };
   
-  audio.onplay = () => { playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>'; };
-  audio.onpause = () => { playPauseBtn.innerHTML = '<i class="fas fa-play"></i>'; };
-
-  // المصادقة
   auth.onAuthStateChanged(async(user)=>{
     if(user && user.emailVerified){
       currentUser=user;
@@ -1070,7 +624,6 @@
       document.getElementById('app').classList.remove('hidden');
       await updateDropdown();
       listenToRadios();
-      initTheme();
       hideSplash();
     }else if(user && !user.emailVerified){
       await auth.signOut();
@@ -1083,9 +636,9 @@
       document.getElementById('app').classList.add('hidden');
       document.getElementById('authContainer').classList.remove('hidden');
       document.getElementById('miniPlayer').classList.add('hidden');
+      document.getElementById('expandedPlayer').classList.add('hidden');
       if(audio) audio.pause();
       hideSplash();
-      initTheme();
     }
   });
   setTimeout(hideSplash, 3000);
