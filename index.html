@@ -303,53 +303,88 @@
   }
 
   // دالة التشغيل الرئيسية مع دعم HLS وإعادة المحاولة بعد دقيقتين
-  function attemptPlay(url, isRetry = false) {
+    function attemptPlay(url, isRetry = false) {
     if (!url) return;
     
     // تنظيف الرابط
     let cleanUrl = url.trim();
     cleanUrl = cleanUrl.replace(/\s/g, '%20');
     
-    // إيقاف أي HLS سابق وتحريره
+    // إيقاف أي HLS سابق
     if (hls) {
       hls.destroy();
       hls = null;
     }
     
-    // إلغاء أي إعادة محاولة سابقة
     if (!isRetry) {
       cancelRetry();
     }
     
-    // دالة بدء التشغيل الفعلية
-    const startPlay = () => {
-      // إذا كان الرابط من نوع m3u8 والمتصفح يدعم HLS
-      if (cleanUrl.includes('.m3u8') && Hls.isSupported()) {
-        hls = new Hls();
-        hls.loadSource(cleanUrl);
-        hls.attachMedia(audio);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          audio.play().catch(e => console.warn(e));
-        });
-        hls.on(Hls.Events.ERROR, (event, data) => {
-          if (data.fatal) {
-            console.error('HLS fatal error', data);
+    // دالة المحاولة عبر proxy (في حال فشل المباشر)
+    const tryDirectThenProxy = () => {
+      // أولاً: نحاول التشغيل المباشر
+      let playSuccess = false;
+      
+      const directPlay = () => {
+        if (cleanUrl.includes('.m3u8') && Hls.isSupported()) {
+          hls = new Hls();
+          hls.loadSource(cleanUrl);
+          hls.attachMedia(audio);
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            audio.play().catch(e => handlePlaybackFailure(cleanUrl));
+          });
+          hls.on(Hls.Events.ERROR, (event, data) => {
+            if (data.fatal && !playSuccess) {
+              console.warn('HLS direct failed, trying proxy');
+              tryProxy();
+            }
+          });
+        } else {
+          audio.src = cleanUrl;
+          audio.load();
+          audio.play().catch(err => {
+            console.warn('Direct play error, trying proxy', err);
+            tryProxy();
+          });
+        }
+      };
+      
+      const tryProxy = () => {
+        // استخدام proxy مجاني لتحويل الرابط
+        const proxyUrl = 'https://cors-anywhere.herokuapp.com/' + cleanUrl;
+        showToast(`🔄 محاولة التشغيل عبر وسيط...`);
+        
+        if (cleanUrl.includes('.m3u8') && Hls.isSupported()) {
+          if (hls) hls.destroy();
+          hls = new Hls();
+          hls.loadSource(proxyUrl);
+          hls.attachMedia(audio);
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            audio.play().catch(e => handlePlaybackFailure(cleanUrl));
+            playSuccess = true;
+          });
+          hls.on(Hls.Events.ERROR, (event, data) => {
+            if (data.fatal && !playSuccess) {
+              handlePlaybackFailure(cleanUrl);
+            }
+          });
+        } else {
+          audio.src = proxyUrl;
+          audio.load();
+          audio.play().then(() => {
+            playSuccess = true;
+            showToast(`✓ تم التشغيل عبر وسيط بنجاح`);
+          }).catch(err => {
+            console.warn('Proxy also failed', err);
             handlePlaybackFailure(cleanUrl);
-          }
-        });
-      } 
-      else {
-        // الروابط العادية (MP3, AAC, stream)
-        audio.src = cleanUrl;
-        audio.load();
-        audio.play().catch(error => {
-          console.warn('Play error:', error);
-          handlePlaybackFailure(cleanUrl);
-        });
-      }
+          });
+        }
+      };
+      
+      directPlay();
     };
     
-    startPlay();
+    tryDirectThenProxy();
   }
   
   // معالجة فشل التشغيل أو التوقف
