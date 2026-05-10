@@ -10,6 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
     :root {
@@ -262,16 +263,20 @@
   let unsubscribeRadios = null;
   let currentCloudinaryUrl = null;
   let currentImageFile = null;
+  
+  // ---------- Retry mechanism ----------
   let retryCount = 0;
   let retryTimer = null;
-
+  let isManualStop = false;       // لمنع إعادة المحاولة عند تغيير المحطة يدوياً
+  let hls = null;                 // مثيل HLS
+  
   // ---------- Helper functions ----------
   function showToast(msg) {
     const toast = document.getElementById('customToast');
     if (toast) {
       toast.innerText = msg;
       toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 2000);
+      setTimeout(() => toast.classList.remove('show'), 3000);
     }
   }
 
@@ -288,7 +293,269 @@
     }
   }
 
-  // ---------- Cloudinary upload ----------
+  // إلغاء أي إعادة محاولة معلقة
+  function cancelRetry() {
+    if (retryTimer) {
+      clearTimeout(retryTimer);
+      retryTimer = null;
+    }
+    retryCount = 0;
+  }
+
+  // دالة التشغيل الرئيسية مع دعم HLS وإعادة المحاولة بعد دقيقتين
+  function attemptPlay(url, isRetry = false) {
+    if (!url) return;
+    
+    // تنظيف الرابط
+    let cleanUrl = url.trim();
+    cleanUrl = cleanUrl.replace(/\s/g, '%20');
+    
+    // إيقاف أي HLS سابق وتحريره
+    if (hls) {
+      hls.destroy();
+      hls = null;
+    }
+    
+    // إلغاء أي إعادة محاولة سابقة
+    if (!isRetry) {
+      cancelRetry();
+    }
+    
+    // دالة بدء التشغيل الفعلية
+    const startPlay = () => {
+      // إذا كان الرابط من نوع m3u8 والمتصفح يدعم HLS
+      if (cleanUrl.includes('.m3u8') && Hls.isSupported()) {
+        hls = new Hls();
+        hls.loadSource(cleanUrl);
+        hls.attachMedia(audio);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          audio.play().catch(e => console.warn(e));
+        });
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          if (data.fatal) {
+            console.error('HLS fatal error', data);
+            handlePlaybackFailure(cleanUrl);
+          }
+        });
+      } 
+      else {
+        // الروابط العادية (MP3, AAC, stream)
+        audio.src = cleanUrl;
+        audio.load();
+        audio.play().catch(error => {
+          console.warn('Play error:', error);
+          handlePlaybackFailure(cleanUrl);
+        });
+      }
+    };
+    
+    startPlay();
+  }
+  
+  // معالجة فشل التشغيل أو التوقف
+  function handlePlaybackFailure(url) {
+    // إذا كان التوقف يدوياً (تغيير المحطة أو إيقاف مؤقت) لا نعيد المحاولة
+    if (isManualStop) return;
+    
+    // الحد الأقصى 3 محاولات
+    if (retryCount < 3) {
+      retryCount++;
+      const waitTime = 120000; // 120 ثانية = دقيقتان
+      showToast(`⚠️ انقطع البث. محاولة إعادة الاتصال ${retryCount}/3 بعد دقيقتين...`);
+      
+      // إلغاء أي مؤقت سابق
+      if (retryTimer) clearTimeout(retryTimer);
+      
+      retryTimer = setTimeout(() => {
+        // التأكد أن المحطة الحالية لم تتغير
+        const currentStation = radios.find(r => r.id == currentPlayingId);
+        if (currentStation && !isManualStop) {
+          showToast(`🔄 محاولة ${retryCount}/3 لإعادة تشغيل ${currentStation.name}`);
+          // تمرير true للإشارة أنها محاولة إعادة
+          attemptPlay(currentStation.streamUrl, true);
+        }
+        retryTimer = null;
+      }, waitTime);
+    } else {
+      showToast(`❌ فشل الاتصال بعد 3 محاولات. يرجى المحاولة لاحقاً أو اختيار محطة أخرى.`);
+      cancelRetry();
+      // إيقاف المشغل الوهمي
+      audio.pause();
+      updateAllPlayerUI();
+    }
+  }
+  
+  // مراقبة أحداث انقطاع البث أثناء التشغيل العادي
+  function setupAudioMonitoring() {
+    audio.onerror = () => {
+      if (!isManualStop && currentPlayingId) {
+        const station = radios.find(r => r.id == currentPlayingId);
+        if (station) handlePlaybackFailure(station.streamUrl);
+      }
+    };
+    
+    audio.onstalled = () => {
+      if (!isManualStop && currentPlayingId) {
+        const station = radios.find(r => r.id == currentPlayingId);
+        if (station && !audio.paused) {
+          console.warn('Stalled event');
+          handlePlaybackFailure(station.streamUrl);
+        }
+      }
+    };
+    
+    audio.onwaiting = () => {
+      // قد يكون buffering عادي، نعطيه فرصة
+      if (!isManualStop && currentPlayingId && retryCount === 0) {
+        // ننتظر 10 ثوانٍ فإذا لم يتحسن نعتبره فشلاً
+        setTimeout(() => {
+          if (audio.readyState < 2 && !audio.paused && !isManualStop) {
+            const station = radios.find(r => r.id == currentPlayingId);
+            if (station) handlePlaybackFailure(station.streamUrl);
+          }
+        }, 10000);
+      }
+    };
+    
+    audio.onended = () => {
+      // بعض البث تنتهي وتحتاج إعادة تشغيل (مثل البث المباشر)
+      if (!isManualStop && currentPlayingId && retryCount < 3) {
+        const station = radios.find(r => r.id == currentPlayingId);
+        if (station) {
+          showToast(`🔄 البث انتهى، إعادة تشغيل تلقائي...`);
+          attemptPlay(station.streamUrl, true);
+        }
+      }
+    };
+  }
+  
+  // تشغيل محطة (الدالة الرئيسية التي يناديها الواجهة)
+  window.playRadio = function(id) {
+    // إلغاء أي إعادة محاولة سابقة
+    cancelRetry();
+    isManualStop = false;
+    const station = radios.find(r => r.id == id);
+    if (!station) return;
+    
+    currentPlayingId = id;
+    
+    // إعادة تعيين متغيرات HLS
+    if (hls) {
+      hls.destroy();
+      hls = null;
+    }
+    
+    // إيقاف الصوت القديم
+    audio.pause();
+    audio.src = '';
+    
+    // بدء تشغيل جديد
+    attemptPlay(station.streamUrl);
+    
+    // تحديث واجهة المشغل
+    document.getElementById('miniPlayer').classList.remove('hidden');
+    document.getElementById('playerMiniAvatar').src = station.imageUrl || 'https://placehold.co/50x50';
+    document.getElementById('expandedAvatar').src = station.imageUrl || 'https://placehold.co/220x220';
+    document.getElementById('expandedTitle').innerText = station.name;
+    updateAllPlayerUI();
+    showToast(`🎵 جاري تشغيل ${station.name}`);
+  };
+  
+  // زر الإيقاف والتشغيل اليدوي
+  function togglePlayPause() {
+    if (audio.paused) {
+      // إذا كان متوقفاً يدوياً، نلغي علامة manual stop ونحاول التشغيل
+      if (isManualStop) isManualStop = false;
+      const station = radios.find(r => r.id == currentPlayingId);
+      if (station) {
+        attemptPlay(station.streamUrl);
+      } else {
+        audio.play().catch(e => console.warn(e));
+      }
+    } else {
+      // إيقاف يدوي
+      isManualStop = true;
+      audio.pause();
+      cancelRetry();
+    }
+    updateAllPlayerUI();
+  }
+  
+  // تغيير المحطة (التالي/السابق) مع إلغاء إعادة المحاولة
+  function previousTrack() {
+    if (radios.length && currentPlayingId) {
+      let idx = radios.findIndex(r => r.id == currentPlayingId);
+      idx = (idx - 1 + radios.length) % radios.length;
+      cancelRetry();
+      isManualStop = false;
+      playRadio(radios[idx].id);
+    }
+  }
+  
+  function nextTrack() {
+    if (radios.length && currentPlayingId) {
+      let idx = radios.findIndex(r => r.id == currentPlayingId);
+      idx = (idx + 1) % radios.length;
+      cancelRetry();
+      isManualStop = false;
+      playRadio(radios[idx].id);
+    }
+  }
+  
+  function toggleMute() {
+    audio.muted = !audio.muted;
+    updateAllPlayerUI();
+  }
+  
+  function setVolume(value) {
+    audio.volume = parseFloat(value);
+    if (audio.muted && audio.volume > 0) audio.muted = false;
+    updateAllPlayerUI();
+  }
+  
+  function updateAllPlayerUI() {
+    const isPlaying = !audio.paused;
+    const playIcon = isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+    const miniPlay = document.getElementById('miniPlayPauseBtn');
+    const expPlay = document.getElementById('expandedPlayPauseBtn');
+    if (miniPlay) miniPlay.innerHTML = playIcon;
+    if (expPlay) expPlay.innerHTML = playIcon;
+    
+    const isMuted = audio.muted;
+    let muteIcon = isMuted ? '<i class="fas fa-volume-mute"></i>' :
+                    (audio.volume <= 0.5 ? '<i class="fas fa-volume-down"></i>' : '<i class="fas fa-volume-up"></i>');
+    const miniMute = document.getElementById('miniMuteBtn');
+    const expMute = document.getElementById('expandedMuteIcon');
+    if (miniMute) miniMute.innerHTML = muteIcon;
+    if (expMute) expMute.innerHTML = muteIcon;
+    
+    const volSlider = document.getElementById('expandedVolumeSlider');
+    if (volSlider) volSlider.value = audio.volume;
+  }
+  
+  // تسجيل أحداث الصوت
+  setupAudioMonitoring();
+  
+  // ربط الأزرار
+  document.getElementById('miniPlayPauseBtn').onclick = togglePlayPause;
+  document.getElementById('miniPrevBtn').onclick = previousTrack;
+  document.getElementById('miniNextBtn').onclick = nextTrack;
+  document.getElementById('miniMuteBtn').onclick = toggleMute;
+  document.getElementById('expandPlayerBtn').onclick = () => document.getElementById('expandedPlayer').classList.remove('hidden');
+  document.getElementById('closeExpandedBtn').onclick = () => document.getElementById('expandedPlayer').classList.add('hidden');
+  document.getElementById('expandedPlayPauseBtn').onclick = togglePlayPause;
+  document.getElementById('expandedPrevBtn').onclick = previousTrack;
+  document.getElementById('expandedNextBtn').onclick = nextTrack;
+  document.getElementById('expandedMuteIcon').onclick = toggleMute;
+  document.getElementById('expandedVolumeSlider').oninput = (e) => setVolume(e.target.value);
+  
+  audio.onplay = updateAllPlayerUI;
+  audio.onpause = updateAllPlayerUI;
+  audio.onvolumechange = updateAllPlayerUI;
+  // لا نستخدم audio.onended هنا لأننا عالجناه داخل setupAudioMonitoring
+  
+  // ---------- باقي دوال التطبيق (Firebase, UI, etc) كما هي مع تعديل بسيط في حذف المحطة لإلغاء المؤقت ----------
+  
   async function uploadToCloudinary(file) {
     return new Promise((resolve, reject) => {
       const fd = new FormData();
@@ -304,15 +571,13 @@
       xhr.send(fd);
     });
   }
-
-  // ---------- Save order ----------
+  
   async function saveOrder() {
     if (!currentUser || radios.length === 0) return;
     const order = radios.map(r => r.id);
     await db.collection('users').doc(currentUser.uid).collection('settings').doc('preferences').set({ order }, { merge: true });
   }
-
-  // ---------- Listen to radios ----------
+  
   function listenToRadios() {
     if (unsubscribeRadios) unsubscribeRadios();
     if (!currentUser) return;
@@ -334,7 +599,7 @@
         hideSplash();
       });
   }
-
+  
   function renderRadios() {
     const grid = document.getElementById('radioGrid');
     let filtered = radios;
@@ -353,7 +618,6 @@
         <h3>${escapeHtml(radio.name)}</h3>
       </div>
     `).join('');
-    // Single click to play
     document.querySelectorAll('.radio-card').forEach(card => {
       card.addEventListener('click', (e) => {
         if (!editMode && !e.target.closest('.menu-dots') && !e.target.closest('.drag-handle')) {
@@ -363,7 +627,7 @@
     });
     if (editMode) enableDragDrop();
   }
-
+  
   function enableDragDrop() {
     let dragSrc = null;
     document.querySelectorAll('.radio-card').forEach(card => {
@@ -393,8 +657,7 @@
       });
     });
   }
-
-  // ---------- Toggle favorite ----------
+  
   window.toggleFavorite = async function(id) {
     const station = radios.find(r => r.id == id);
     if (!station) return;
@@ -402,109 +665,7 @@
     await db.collection('users').doc(currentUser.uid).collection('radios').doc(id).update({ favorite: newFav });
     showToast(newFav ? '❤️ أضيفت للمفضلة' : '💔 أزيلت من المفضلة');
   };
-
-  // ---------- Improved play with retry and URL encoding ----------
-  function attemptPlay(url, retriesLeft = 3) {
-    let cleanUrl;
-    try {
-      cleanUrl = encodeURI(url); // ترميز الأحرف الخاصة مثل ; : /؟ إلخ
-    } catch(e) {
-      cleanUrl = url;
-    }
-    audio.src = cleanUrl;
-    audio.load();
-    audio.play().then(() => {
-      retryCount = 0;
-      showToast('✓ جاري التشغيل');
-    }).catch(error => {
-      console.warn('Play error:', error);
-      if (retriesLeft > 0 && retryCount < 3) {
-        retryCount++;
-        showToast(`⚠️ محاولة إعادة الاتصال (${retryCount}/3)...`);
-        setTimeout(() => attemptPlay(url, retriesLeft - 1), 2000);
-      } else {
-        showToast('❌ فشل التشغيل، الرابط غير مدعوم أو أن الخادم لا يستجيب');
-      }
-    });
-  }
-
-  window.playRadio = function(id) {
-    if (retryTimer) clearTimeout(retryTimer);
-    retryCount = 0;
-    const station = radios.find(r => r.id == id);
-    if (!station) return;
-    currentPlayingId = id;
-    attemptPlay(station.streamUrl);
-    // Update UI
-    document.getElementById('miniPlayer').classList.remove('hidden');
-    document.getElementById('playerMiniAvatar').src = station.imageUrl || 'https://placehold.co/50x50';
-    document.getElementById('expandedAvatar').src = station.imageUrl || 'https://placehold.co/220x220';
-    document.getElementById('expandedTitle').innerText = station.name;
-    updateAllPlayerUI();
-    showToast(`🎵 تشغيل ${station.name}`);
-  };
-
-  // ---------- Player UI sync (fixed for iOS) ----------
-  function updateAllPlayerUI() {
-    const isPlaying = !audio.paused;
-    const playIcon = isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
-    const miniPlay = document.getElementById('miniPlayPauseBtn');
-    const expPlay = document.getElementById('expandedPlayPauseBtn');
-    if (miniPlay) miniPlay.innerHTML = playIcon;
-    if (expPlay) expPlay.innerHTML = playIcon;
-
-    const isMuted = audio.muted;
-    let muteIcon = isMuted ? '<i class="fas fa-volume-mute"></i>' :
-                    (audio.volume <= 0.5 ? '<i class="fas fa-volume-down"></i>' : '<i class="fas fa-volume-up"></i>');
-    const miniMute = document.getElementById('miniMuteBtn');
-    const expMute = document.getElementById('expandedMuteIcon');
-    if (miniMute) miniMute.innerHTML = muteIcon;
-    if (expMute) expMute.innerHTML = muteIcon;
-
-    const volSlider = document.getElementById('expandedVolumeSlider');
-    if (volSlider) volSlider.value = audio.volume;
-  }
-
-  // ---------- Playback controls ----------
-  function togglePlayPause() {
-    if (audio.paused) {
-      const station = radios.find(r => r.id == currentPlayingId);
-      if (station) attemptPlay(station.streamUrl);
-      else audio.play();
-    } else {
-      audio.pause();
-    }
-    updateAllPlayerUI();
-  }
-  function previousTrack() {
-    if (radios.length && currentPlayingId) {
-      let idx = radios.findIndex(r => r.id == currentPlayingId);
-      idx = (idx - 1 + radios.length) % radios.length;
-      playRadio(radios[idx].id);
-    }
-  }
-  function nextTrack() {
-    if (radios.length && currentPlayingId) {
-      let idx = radios.findIndex(r => r.id == currentPlayingId);
-      idx = (idx + 1) % radios.length;
-      playRadio(radios[idx].id);
-    }
-  }
-  function toggleMute() {
-    audio.muted = !audio.muted;
-    updateAllPlayerUI();
-  }
-  function setVolume(value) {
-    audio.volume = parseFloat(value);
-    if (audio.muted && audio.volume > 0) audio.muted = false;
-    updateAllPlayerUI();
-    // For iOS: ensure volume change works even if paused
-    if (audio.paused && audio.readyState >= 2) {
-      audio.play().catch(() => {});
-    }
-  }
-
-  // ---------- Delete / Edit ----------
+  
   window.openEditMenu = async function(id) {
     document.getElementById('userDropdown').classList.add('hidden');
     const result = await Swal.fire({
@@ -517,12 +678,14 @@
     if (result.isConfirmed) editRadio(id);
     else if (result.isDenied) deleteRadio(id);
   };
-
+  
   window.deleteRadio = async function(id) {
     const confirm = await Swal.fire({ title: 'حذف المحطة؟', icon: 'warning', showCancelButton: true });
     if (confirm.isConfirmed) {
       await db.collection('users').doc(currentUser.uid).collection('radios').doc(id).delete();
       if (currentPlayingId == id) {
+        cancelRetry();
+        isManualStop = true;
         audio.pause();
         document.getElementById('miniPlayer').classList.add('hidden');
         document.getElementById('expandedPlayer').classList.add('hidden');
@@ -531,7 +694,7 @@
       showToast('✓ تم الحذف');
     }
   };
-
+  
   window.editRadio = async function(id) {
     const radio = radios.find(r => r.id == id);
     editId = id;
@@ -550,8 +713,8 @@
     document.getElementById('deleteFromModalBtn').classList.remove('hidden');
     document.getElementById('radioModal').classList.remove('hidden');
   };
-
-  // ---------- Auth UI ----------
+  
+  // Auth and UI binding (مختصر)
   document.getElementById('registerBtn').onclick = async () => {
     const name = document.getElementById('registerName').value;
     const email = document.getElementById('registerEmail').value;
@@ -594,14 +757,15 @@
   };
   document.getElementById('logoutBtn').onclick = async () => {
     await auth.signOut();
+    cancelRetry();
+    isManualStop = true;
     audio.pause();
     document.getElementById('miniPlayer').classList.add('hidden');
     document.getElementById('expandedPlayer').classList.add('hidden');
     currentPlayingId = null;
     showToast('✓ تم تسجيل الخروج');
   };
-
-  // ---------- Search ----------
+  
   const searchBtn = document.getElementById('searchBtn');
   const searchContainer = document.getElementById('searchContainer');
   const searchInput = document.getElementById('searchInput');
@@ -616,8 +780,7 @@
       card.style.display = title.includes(val) ? '' : 'none';
     });
   };
-
-  // ---------- Add / Edit radio modal ----------
+  
   document.getElementById('addRadioBtn').onclick = () => {
     editId = null;
     document.getElementById('modalTitle').innerText = '➕ محطة جديدة';
@@ -670,7 +833,7 @@
     }
   };
   document.getElementById('closeModalBtn').onclick = () => document.getElementById('radioModal').classList.add('hidden');
-
+  
   const uploadArea = document.getElementById('imageUploadArea');
   const imgInput = document.getElementById('radioImage');
   uploadArea.onclick = () => imgInput.click();
@@ -688,8 +851,7 @@
       showToast('⚠️ صورة فقط وحتى 5MB');
     }
   };
-
-  // ---------- User dropdown ----------
+  
   const profileTrigger = document.getElementById('profileTrigger');
   const userDropdown = document.getElementById('userDropdown');
   profileTrigger.onclick = (e) => {
@@ -725,8 +887,7 @@
     userDropdown.classList.add('hidden');
     showToast(editMode ? 'اسحب القنوات لإعادة الترتيب' : 'تم الخروج من وضع الترتيب');
   };
-
-  // ---------- View pills ----------
+  
   document.querySelectorAll('.view-pill').forEach(btn => {
     btn.onclick = () => {
       document.querySelectorAll('.view-pill').forEach(b => b.classList.remove('active'));
@@ -739,8 +900,7 @@
       renderRadios();
     };
   });
-
-  // ---------- Theme toggle ----------
+  
   document.getElementById('themeToggle').onclick = () => {
     document.body.classList.toggle('dark');
     localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
@@ -748,30 +908,7 @@
   };
   if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
   document.getElementById('themeToggle').innerHTML = document.body.classList.contains('dark') ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-
-  // ---------- Player control binding ----------
-  document.getElementById('miniPlayPauseBtn').onclick = togglePlayPause;
-  document.getElementById('miniPrevBtn').onclick = previousTrack;
-  document.getElementById('miniNextBtn').onclick = nextTrack;
-  document.getElementById('miniMuteBtn').onclick = toggleMute;
-  document.getElementById('expandPlayerBtn').onclick = () => document.getElementById('expandedPlayer').classList.remove('hidden');
-  document.getElementById('closeExpandedBtn').onclick = () => document.getElementById('expandedPlayer').classList.add('hidden');
-  document.getElementById('expandedPlayPauseBtn').onclick = togglePlayPause;
-  document.getElementById('expandedPrevBtn').onclick = previousTrack;
-  document.getElementById('expandedNextBtn').onclick = nextTrack;
-  document.getElementById('expandedMuteIcon').onclick = toggleMute;
-  document.getElementById('expandedVolumeSlider').oninput = (e) => setVolume(e.target.value);
-
-  audio.onplay = updateAllPlayerUI;
-  audio.onpause = updateAllPlayerUI;
-  audio.onvolumechange = updateAllPlayerUI;
-  audio.onended = nextTrack;
-  audio.onerror = () => {
-    const station = radios.find(r => r.id == currentPlayingId);
-    if (station) attemptPlay(station.streamUrl, 3);
-  };
-
-  // ---------- Auth state ----------
+  
   auth.onAuthStateChanged(async (user) => {
     if (user && user.emailVerified) {
       currentUser = user;
@@ -792,7 +929,10 @@
       document.getElementById('authContainer').classList.remove('hidden');
       document.getElementById('miniPlayer').classList.add('hidden');
       document.getElementById('expandedPlayer').classList.add('hidden');
-      if (audio) audio.pause();
+      if (audio) {
+        cancelRetry();
+        audio.pause();
+      }
       hideSplash();
     }
   });
