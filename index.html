@@ -45,19 +45,16 @@
     }
     body { background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; padding-bottom: 70px; transition: all 0.3s; }
     .hidden { display: none !important; }
-    /* Splash screen */
     #splash-screen { position: fixed; inset: 0; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.5s; }
     .loader { width: 60px; height: 60px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
     @keyframes spin { to { transform: rotate(360deg); } }
     #loading-status { color: white; font-size: 14px; letter-spacing: 1px; }
-    /* Top navigation */
     .top-nav { position: sticky; top: 0; z-index: 100; background: var(--nav-bg); backdrop-filter: var(--glass-blur); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
     .logo h1 { font-size: 1.5rem; background: linear-gradient(135deg, var(--accent), #3b82f6); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 700; }
     .nav-actions { display: flex; gap: 12px; }
     .icon-btn { background: var(--input-bg); border: 1px solid var(--border); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; color: var(--text-primary); display: flex; align-items: center; justify-content: center; transition: 0.2s; }
     .icon-btn:hover { background: var(--accent); color: white; transform: scale(1.05); }
     .profile-trigger { background: linear-gradient(135deg, var(--accent), #3b82f6); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; }
-    /* User dropdown */
     .user-dropdown { position: absolute; top: 70px; right: 24px; background: var(--bg-card); backdrop-filter: var(--glass-blur); border-radius: 20px; width: 280px; box-shadow: var(--shadow); z-index: 200; border: 1px solid var(--border); animation: fadeIn 0.2s; }
     .dropdown-header { padding: 20px; text-align: center; border-bottom: 1px solid var(--border); }
     .dropdown-header img { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent); }
@@ -67,15 +64,12 @@
     .dropdown-item i { width: 24px; color: var(--accent); }
     .dropdown-item:hover { background: rgba(34,197,94,0.1); }
     .dropdown-divider { height: 1px; background: var(--border); margin: 8px 0; }
-    /* View pills */
     .view-bar { display: flex; justify-content: center; gap: 10px; margin: 20px 24px; }
     .view-pill { background: var(--input-bg); border: 1px solid var(--border); padding: 8px 24px; border-radius: 40px; cursor: pointer; color: var(--text-secondary); transition: 0.2s; }
     .view-pill.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 2px 8px rgba(34,197,94,0.3); }
-    /* Search */
     #searchContainer { padding: 0 24px 12px; overflow: hidden; transition: 0.3s; max-height: 0; opacity: 0; }
     #searchContainer.show { max-height: 100px; opacity: 1; }
     #searchInput { width: 100%; padding: 12px 16px; border-radius: 30px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-primary); }
-    /* Radio grid */
     .radio-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; padding: 0 24px 24px; }
     .radio-card { background: var(--bg-card); backdrop-filter: var(--glass-blur); border-radius: 24px; padding: 16px; transition: all 0.25s; cursor: pointer; box-shadow: var(--shadow); border: 1px solid var(--border); position: relative; }
     .radio-card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: var(--shadow-hover); }
@@ -91,12 +85,10 @@
     .circle-view .radio-card { width: 100px; text-align: center; background: transparent; backdrop-filter: none; box-shadow: none; padding: 8px; }
     .circle-view .radio-card img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--accent); margin-bottom: 8px; }
     .circle-view .menu-dots, .circle-view .drag-handle { top: 4px; width: 24px; height: 24px; }
-    /* Modal */
     .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     .modal-content { background: var(--bg-card); backdrop-filter: var(--glass-blur); max-width: 500px; width: 90%; padding: 28px; border-radius: 32px; }
     .modal-content input { width: 100%; padding: 12px; margin-bottom: 14px; border: 1px solid var(--border); border-radius: 16px; background: var(--input-bg); color: var(--text-primary); }
     .image-upload-area { border: 2px dashed var(--border); border-radius: 20px; padding: 16px; text-align: center; cursor: pointer; margin-bottom: 12px; }
-    /* Mini player */
     .mini-player { position: fixed; bottom: 0; left: 0; right: 0; background: var(--player-bg); backdrop-filter: var(--glass-blur); border-top: 1px solid var(--border); padding: 6px 20px; display: flex; align-items: center; justify-content: space-between; z-index: 100; }
     .player-mini-left { display: flex; align-items: center; gap: 12px; }
     .player-mini-avatar { width: 44px; height: 44px; border-radius: 12px; object-fit: cover; cursor: pointer; }
@@ -105,7 +97,6 @@
     .player-mini-controls button:hover { background: rgba(34,197,94,0.2); }
     .player-mini-controls button.primary { background: var(--accent); color: white; }
     .expand-btn { background: transparent; border: none; cursor: pointer; color: var(--text-secondary); font-size: 1.2rem; padding: 8px; transition: 0.2s; }
-    /* Expanded player */
     .player-expanded { position: fixed; inset: 0; background: var(--bg-card); backdrop-filter: blur(20px); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; animation: fadeIn 0.3s; }
     .expanded-avatar { width: 220px; height: 220px; border-radius: 30px; object-fit: cover; box-shadow: 0 20px 35px -10px rgba(0,0,0,0.3); border: 3px solid var(--accent); }
     .expanded-title { font-size: 1.8rem; font-weight: 700; text-align: center; margin-top: 10px; }
@@ -115,10 +106,8 @@
     .expanded-volume { display: flex; align-items: center; gap: 16px; width: 80%; max-width: 300px; margin: 10px auto; }
     .expanded-volume input { flex: 1; height: 5px; border-radius: 5px; accent-color: var(--accent); cursor: pointer; }
     .close-expanded { position: absolute; top: 20px; left: 20px; background: transparent; border: none; font-size: 1.8rem; cursor: pointer; color: var(--text-secondary); }
-    /* Toast */
     .custom-toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--toast-bg); color: var(--toast-text); padding: 8px 20px; border-radius: 40px; font-size: 13px; z-index: 1100; opacity: 0; transition: 0.2s; white-space: nowrap; pointer-events: none; }
     .custom-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    /* Auth */
     .auth-container { min-height: 100vh; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; padding: 20px; }
     .auth-card { background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); border-radius: 40px; padding: 45px 35px; width: 100%; max-width: 450px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); animation: fadeInUp 0.5s; }
     body.dark .auth-card { background: rgba(30,41,59,0.98); }
@@ -260,16 +249,18 @@
   let editId = null;
   let editMode = false;
   let audio = new Audio();
+  audio.crossOrigin = "Anonymous";  // مهم لسياسات CORS
   let unsubscribeRadios = null;
   let currentCloudinaryUrl = null;
   let currentImageFile = null;
   
-  // ---------- Retry mechanism ----------
+  // Retry mechanism
   let retryCount = 0;
   let retryTimer = null;
-  let isManualStop = false;       // لمنع إعادة المحاولة عند تغيير المحطة يدوياً
-  let hls = null;                 // مثيل HLS
-  
+  let isManualStop = false;
+  let hls = null;
+  let proxyActivated = false;   // لتتبع تفعيل الـ proxy
+
   // ---------- Helper functions ----------
   function showToast(msg) {
     const toast = document.getElementById('customToast');
@@ -293,7 +284,6 @@
     }
   }
 
-  // إلغاء أي إعادة محاولة معلقة
   function cancelRetry() {
     if (retryTimer) {
       clearTimeout(retryTimer);
@@ -302,125 +292,102 @@
     retryCount = 0;
   }
 
-  // دالة التشغيل الرئيسية مع دعم HLS وإعادة المحاولة بعد دقيقتين
-    function attemptPlay(url, isRetry = false) {
+  // دالة المحاولة عبر Proxy (تُستدعى بعد فشل المباشر)
+  function tryWithProxy(originalUrl) {
+    return new Promise((resolve, reject) => {
+      // استخدام خدمة cors-anywhere
+      const proxyUrl = 'https://cors-anywhere.herokuapp.com/' + originalUrl;
+      showToast(`🔄 محاولة التشغيل عبر وسيط (CORS Proxy)...`);
+      
+      // اختبار ما إذا كان proxy يعمل عن طريق محاولة تحميل جزء صغير
+      fetch(proxyUrl, { method: 'HEAD', mode: 'cors' })
+        .then(response => {
+          if (response.ok || response.status === 206) {
+            // نجاح الاتصال بالـ proxy
+            resolve(proxyUrl);
+          } else {
+            reject(new Error('Proxy responded with status ' + response.status));
+          }
+        })
+        .catch(err => {
+          console.warn('Proxy test failed', err);
+          reject(err);
+        });
+    });
+  }
+
+  // دالة التشغيل الرئيسية مع خيار مباشر أولاً ثم Proxy تلقائياً
+  function attemptPlay(url, isRetry = false) {
     if (!url) return;
+    if (hls) { hls.destroy(); hls = null; }
+    if (!isRetry) cancelRetry();
     
-    // تنظيف الرابط
-    let cleanUrl = url.trim();
-    cleanUrl = cleanUrl.replace(/\s/g, '%20');
+    let cleanUrl = url.trim().replace(/\s/g, '%20');
     
-    // إيقاف أي HLS سابق
-    if (hls) {
-      hls.destroy();
-      hls = null;
-    }
-    
-    if (!isRetry) {
-      cancelRetry();
-    }
-    
-    // دالة المحاولة عبر proxy (في حال فشل المباشر)
-    const tryDirectThenProxy = () => {
-      // أولاً: نحاول التشغيل المباشر
-      let playSuccess = false;
-      
-      const directPlay = () => {
-        if (cleanUrl.includes('.m3u8') && Hls.isSupported()) {
-          hls = new Hls();
-          hls.loadSource(cleanUrl);
-          hls.attachMedia(audio);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            audio.play().catch(e => handlePlaybackFailure(cleanUrl));
-          });
-          hls.on(Hls.Events.ERROR, (event, data) => {
-            if (data.fatal && !playSuccess) {
-              console.warn('HLS direct failed, trying proxy');
-              tryProxy();
-            }
-          });
-        } else {
-          audio.src = cleanUrl;
-          audio.load();
-          audio.play().catch(err => {
-            console.warn('Direct play error, trying proxy', err);
-            tryProxy();
-          });
-        }
-      };
-      
-      const tryProxy = () => {
-        // استخدام proxy مجاني لتحويل الرابط
-        const proxyUrl = 'https://cors-anywhere.herokuapp.com/' + cleanUrl;
-        showToast(`🔄 محاولة التشغيل عبر وسيط...`);
-        
-        if (cleanUrl.includes('.m3u8') && Hls.isSupported()) {
-          if (hls) hls.destroy();
-          hls = new Hls();
-          hls.loadSource(proxyUrl);
-          hls.attachMedia(audio);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            audio.play().catch(e => handlePlaybackFailure(cleanUrl));
-            playSuccess = true;
-          });
-          hls.on(Hls.Events.ERROR, (event, data) => {
-            if (data.fatal && !playSuccess) {
-              handlePlaybackFailure(cleanUrl);
-            }
-          });
-        } else {
-          audio.src = proxyUrl;
-          audio.load();
-          audio.play().then(() => {
-            playSuccess = true;
-            showToast(`✓ تم التشغيل عبر وسيط بنجاح`);
-          }).catch(err => {
-            console.warn('Proxy also failed', err);
-            handlePlaybackFailure(cleanUrl);
-          });
-        }
-      };
-      
-      directPlay();
+    // دالة بدء التشغيل الفعلية
+    const startWithUrl = (streamUrl) => {
+      if (streamUrl.includes('.m3u8') && Hls.isSupported()) {
+        hls = new Hls();
+        hls.loadSource(streamUrl);
+        hls.attachMedia(audio);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          audio.play().catch(e => handlePlaybackFailure(cleanUrl));
+        });
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          if (data.fatal) handlePlaybackFailure(cleanUrl);
+        });
+      } else {
+        audio.src = streamUrl;
+        audio.load();
+        audio.play().catch(err => handlePlaybackFailure(cleanUrl));
+      }
     };
     
-    tryDirectThenProxy();
+    // 1. المحاولة المباشرة أولاً
+    startWithUrl(cleanUrl);
+    
+    // 2. الاستماع للخطأ الأولي للمباشر، ثم التحويل إلى Proxy تلقائياً
+    const errorHandler = () => {
+      audio.removeEventListener('error', errorHandler);
+      if (!proxyActivated) {
+        proxyActivated = true;
+        showToast(`⚠️ البث المباشر فشل، جارٍ التبديل إلى الوسيط...`);
+        tryWithProxy(cleanUrl)
+          .then(proxyStreamUrl => {
+            startWithUrl(proxyStreamUrl);
+          })
+          .catch(() => {
+            showToast(`❌ فشل الوسيط أيضاً، سيتم إعادة المحاولة لاحقاً`);
+            handlePlaybackFailure(cleanUrl);
+          });
+      }
+    };
+    audio.addEventListener('error', errorHandler, { once: true });
   }
   
-  // معالجة فشل التشغيل أو التوقف
   function handlePlaybackFailure(url) {
-    // إذا كان التوقف يدوياً (تغيير المحطة أو إيقاف مؤقت) لا نعيد المحاولة
     if (isManualStop) return;
-    
-    // الحد الأقصى 3 محاولات
     if (retryCount < 3) {
       retryCount++;
-      const waitTime = 120000; // 120 ثانية = دقيقتان
-      showToast(`⚠️ انقطع البث. محاولة إعادة الاتصال ${retryCount}/3 بعد دقيقتين...`);
-      
-      // إلغاء أي مؤقت سابق
+      const waitTime = 120000; // 2 minutes
+      showToast(`⚠️ انقطع البث. محاولة ${retryCount}/3 بعد دقيقتين...`);
       if (retryTimer) clearTimeout(retryTimer);
-      
       retryTimer = setTimeout(() => {
-        // التأكد أن المحطة الحالية لم تتغير
-        const currentStation = radios.find(r => r.id == currentPlayingId);
-        if (currentStation && !isManualStop) {
-          showToast(`🔄 محاولة ${retryCount}/3 لإعادة تشغيل ${currentStation.name}`);
-          // تمرير true للإشارة أنها محاولة إعادة
-          attemptPlay(currentStation.streamUrl, true);
+        const station = radios.find(r => r.id == currentPlayingId);
+        if (station && !isManualStop) {
+          showToast(`🔄 إعادة محاولة تشغيل ${station.name} (${retryCount}/3)`);
+          attemptPlay(station.streamUrl, true);
         }
         retryTimer = null;
       }, waitTime);
     } else {
-      showToast(`❌ فشل الاتصال بعد 3 محاولات. يرجى المحاولة لاحقاً أو اختيار محطة أخرى.`);
+      showToast(`❌ فشل الاتصال بعد 3 محاولات. يرجى التحقق من الرابط أو المحاولة لاحقاً.`);
       cancelRetry();
-      // إيقاف المشغل الوهمي
       audio.pause();
       updateAllPlayerUI();
     }
   }
   
-  // مراقبة أحداث انقطاع البث أثناء التشغيل العادي
   function setupAudioMonitoring() {
     audio.onerror = () => {
       if (!isManualStop && currentPlayingId) {
@@ -428,66 +395,35 @@
         if (station) handlePlaybackFailure(station.streamUrl);
       }
     };
-    
     audio.onstalled = () => {
-      if (!isManualStop && currentPlayingId) {
+      if (!isManualStop && currentPlayingId && !audio.paused) {
         const station = radios.find(r => r.id == currentPlayingId);
-        if (station && !audio.paused) {
-          console.warn('Stalled event');
-          handlePlaybackFailure(station.streamUrl);
-        }
+        if (station) handlePlaybackFailure(station.streamUrl);
       }
     };
-    
-    audio.onwaiting = () => {
-      // قد يكون buffering عادي، نعطيه فرصة
-      if (!isManualStop && currentPlayingId && retryCount === 0) {
-        // ننتظر 10 ثوانٍ فإذا لم يتحسن نعتبره فشلاً
-        setTimeout(() => {
-          if (audio.readyState < 2 && !audio.paused && !isManualStop) {
-            const station = radios.find(r => r.id == currentPlayingId);
-            if (station) handlePlaybackFailure(station.streamUrl);
-          }
-        }, 10000);
-      }
-    };
-    
     audio.onended = () => {
-      // بعض البث تنتهي وتحتاج إعادة تشغيل (مثل البث المباشر)
       if (!isManualStop && currentPlayingId && retryCount < 3) {
         const station = radios.find(r => r.id == currentPlayingId);
         if (station) {
-          showToast(`🔄 البث انتهى، إعادة تشغيل تلقائي...`);
+          showToast(`🔄 البث انتهى، إعادة تشغيل...`);
           attemptPlay(station.streamUrl, true);
         }
       }
     };
   }
   
-  // تشغيل محطة (الدالة الرئيسية التي يناديها الواجهة)
+  // تشغيل المحطة (الواجهة)
   window.playRadio = function(id) {
-    // إلغاء أي إعادة محاولة سابقة
     cancelRetry();
     isManualStop = false;
+    proxyActivated = false;
     const station = radios.find(r => r.id == id);
     if (!station) return;
-    
     currentPlayingId = id;
-    
-    // إعادة تعيين متغيرات HLS
-    if (hls) {
-      hls.destroy();
-      hls = null;
-    }
-    
-    // إيقاف الصوت القديم
+    if (hls) { hls.destroy(); hls = null; }
     audio.pause();
     audio.src = '';
-    
-    // بدء تشغيل جديد
     attemptPlay(station.streamUrl);
-    
-    // تحديث واجهة المشغل
     document.getElementById('miniPlayer').classList.remove('hidden');
     document.getElementById('playerMiniAvatar').src = station.imageUrl || 'https://placehold.co/50x50';
     document.getElementById('expandedAvatar').src = station.imageUrl || 'https://placehold.co/220x220';
@@ -496,19 +432,13 @@
     showToast(`🎵 جاري تشغيل ${station.name}`);
   };
   
-  // زر الإيقاف والتشغيل اليدوي
   function togglePlayPause() {
     if (audio.paused) {
-      // إذا كان متوقفاً يدوياً، نلغي علامة manual stop ونحاول التشغيل
       if (isManualStop) isManualStop = false;
       const station = radios.find(r => r.id == currentPlayingId);
-      if (station) {
-        attemptPlay(station.streamUrl);
-      } else {
-        audio.play().catch(e => console.warn(e));
-      }
+      if (station) attemptPlay(station.streamUrl);
+      else audio.play().catch(e => console.warn);
     } else {
-      // إيقاف يدوي
       isManualStop = true;
       audio.pause();
       cancelRetry();
@@ -516,7 +446,6 @@
     updateAllPlayerUI();
   }
   
-  // تغيير المحطة (التالي/السابق) مع إلغاء إعادة المحاولة
   function previousTrack() {
     if (radios.length && currentPlayingId) {
       let idx = radios.findIndex(r => r.id == currentPlayingId);
@@ -526,7 +455,6 @@
       playRadio(radios[idx].id);
     }
   }
-  
   function nextTrack() {
     if (radios.length && currentPlayingId) {
       let idx = radios.findIndex(r => r.id == currentPlayingId);
@@ -536,17 +464,8 @@
       playRadio(radios[idx].id);
     }
   }
-  
-  function toggleMute() {
-    audio.muted = !audio.muted;
-    updateAllPlayerUI();
-  }
-  
-  function setVolume(value) {
-    audio.volume = parseFloat(value);
-    if (audio.muted && audio.volume > 0) audio.muted = false;
-    updateAllPlayerUI();
-  }
+  function toggleMute() { audio.muted = !audio.muted; updateAllPlayerUI(); }
+  function setVolume(val) { audio.volume = parseFloat(val); if (audio.muted && audio.volume > 0) audio.muted = false; updateAllPlayerUI(); }
   
   function updateAllPlayerUI() {
     const isPlaying = !audio.paused;
@@ -555,43 +474,20 @@
     const expPlay = document.getElementById('expandedPlayPauseBtn');
     if (miniPlay) miniPlay.innerHTML = playIcon;
     if (expPlay) expPlay.innerHTML = playIcon;
-    
     const isMuted = audio.muted;
-    let muteIcon = isMuted ? '<i class="fas fa-volume-mute"></i>' :
-                    (audio.volume <= 0.5 ? '<i class="fas fa-volume-down"></i>' : '<i class="fas fa-volume-up"></i>');
+    let muteIcon = isMuted ? '<i class="fas fa-volume-mute"></i>' : (audio.volume <= 0.5 ? '<i class="fas fa-volume-down"></i>' : '<i class="fas fa-volume-up"></i>');
     const miniMute = document.getElementById('miniMuteBtn');
     const expMute = document.getElementById('expandedMuteIcon');
     if (miniMute) miniMute.innerHTML = muteIcon;
     if (expMute) expMute.innerHTML = muteIcon;
-    
     const volSlider = document.getElementById('expandedVolumeSlider');
     if (volSlider) volSlider.value = audio.volume;
   }
   
-  // تسجيل أحداث الصوت
   setupAudioMonitoring();
   
-  // ربط الأزرار
-  document.getElementById('miniPlayPauseBtn').onclick = togglePlayPause;
-  document.getElementById('miniPrevBtn').onclick = previousTrack;
-  document.getElementById('miniNextBtn').onclick = nextTrack;
-  document.getElementById('miniMuteBtn').onclick = toggleMute;
-  document.getElementById('expandPlayerBtn').onclick = () => document.getElementById('expandedPlayer').classList.remove('hidden');
-  document.getElementById('closeExpandedBtn').onclick = () => document.getElementById('expandedPlayer').classList.add('hidden');
-  document.getElementById('expandedPlayPauseBtn').onclick = togglePlayPause;
-  document.getElementById('expandedPrevBtn').onclick = previousTrack;
-  document.getElementById('expandedNextBtn').onclick = nextTrack;
-  document.getElementById('expandedMuteIcon').onclick = toggleMute;
-  document.getElementById('expandedVolumeSlider').oninput = (e) => setVolume(e.target.value);
-  
-  audio.onplay = updateAllPlayerUI;
-  audio.onpause = updateAllPlayerUI;
-  audio.onvolumechange = updateAllPlayerUI;
-  // لا نستخدم audio.onended هنا لأننا عالجناه داخل setupAudioMonitoring
-  
-  // ---------- باقي دوال التطبيق (Firebase, UI, etc) كما هي مع تعديل بسيط في حذف المحطة لإلغاء المؤقت ----------
-  
-  async function uploadToCloudinary(file) {
+  // باقي دوال Firebase وإدارة الواجهة (نفس الأصل ولكن محسّنة)
+  async function uploadToCloudinary(file) { /* as before */ 
     return new Promise((resolve, reject) => {
       const fd = new FormData();
       fd.append('file', file);
@@ -666,12 +562,9 @@
   function enableDragDrop() {
     let dragSrc = null;
     document.querySelectorAll('.radio-card').forEach(card => {
-      card.addEventListener('dragstart', e => {
-        dragSrc = card;
-        e.dataTransfer.effectAllowed = 'move';
-        card.classList.add('dragging');
-      });
-      card.addEventListener('dragend', () => card.classList.remove('dragging'));
+      card.setAttribute('draggable', 'true');
+      card.addEventListener('dragstart', e => { dragSrc = card; e.dataTransfer.effectAllowed = 'move'; });
+      card.addEventListener('dragend', () => dragSrc = null);
       card.addEventListener('dragover', e => e.preventDefault());
       card.addEventListener('drop', async e => {
         e.preventDefault();
@@ -688,7 +581,6 @@
             showToast('✓ تم تحديث الترتيب');
           }
         }
-        dragSrc = null;
       });
     });
   }
@@ -749,7 +641,7 @@
     document.getElementById('radioModal').classList.remove('hidden');
   };
   
-  // Auth and UI binding (مختصر)
+  // ربط الأزرار ووظائف المصادقة (كما هي مع بعض التعديلات الطفيفة)
   document.getElementById('registerBtn').onclick = async () => {
     const name = document.getElementById('registerName').value;
     const email = document.getElementById('registerEmail').value;
@@ -943,6 +835,22 @@
   };
   if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
   document.getElementById('themeToggle').innerHTML = document.body.classList.contains('dark') ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+  
+  document.getElementById('miniPlayPauseBtn').onclick = togglePlayPause;
+  document.getElementById('miniPrevBtn').onclick = previousTrack;
+  document.getElementById('miniNextBtn').onclick = nextTrack;
+  document.getElementById('miniMuteBtn').onclick = toggleMute;
+  document.getElementById('expandPlayerBtn').onclick = () => document.getElementById('expandedPlayer').classList.remove('hidden');
+  document.getElementById('closeExpandedBtn').onclick = () => document.getElementById('expandedPlayer').classList.add('hidden');
+  document.getElementById('expandedPlayPauseBtn').onclick = togglePlayPause;
+  document.getElementById('expandedPrevBtn').onclick = previousTrack;
+  document.getElementById('expandedNextBtn').onclick = nextTrack;
+  document.getElementById('expandedMuteIcon').onclick = toggleMute;
+  document.getElementById('expandedVolumeSlider').oninput = (e) => setVolume(e.target.value);
+  
+  audio.onplay = updateAllPlayerUI;
+  audio.onpause = updateAllPlayerUI;
+  audio.onvolumechange = updateAllPlayerUI;
   
   auth.onAuthStateChanged(async (user) => {
     if (user && user.emailVerified) {
